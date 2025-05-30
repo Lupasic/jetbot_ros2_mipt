@@ -1,0 +1,19 @@
+services:
+  jetbot:
+    image: jetbot_main_docker
+
+    runtime: nvidia
+    restart: always
+    network_mode: host
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ./src:/home/app/ros2_ws/src
+      - /dev:/dev
+    environment:
+      - DISPLAY=${DISPLAY}
+      - ROS_DOMAIN_ID=42
+      - ROS_LOCALHOST_ONLY=0
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+    devices:
+      - /dev/input:/dev/input
+
