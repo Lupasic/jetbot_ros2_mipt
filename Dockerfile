@@ -101,7 +101,7 @@ WORKDIR ${ROS_ROOT}/src
 
 RUN rosinstall_generator --deps --rosdistro ${ROS_DISTRO} \
 navigation2 nav2_bringup ros2_control ros2_controllers rplidar_ros \
-rqt rqt_common_plugins rqt_robot_plugins rviz2 \
+rqt rqt_common_plugins rviz2 \
 > ros2.${ROS_DISTRO}.install.rosinstall
 
 COPY docker_configs/scripts/filter_rosinstall.py /tmp/filter_rosinstall.py
@@ -121,6 +121,14 @@ RUN vcs import ${ROS_ROOT}/src < ros2.${ROS_DISTRO}.install.filtered.rosinstall
 
 
 # for mppi
+RUN cd /tmp && \
+    wget https://github.com/Kitware/CMake/releases/download/v3.29.2/cmake-3.29.2-linux-aarch64.tar.gz && \
+    tar -xzf cmake-3.29.2-linux-aarch64.tar.gz && \
+    cp -r cmake-3.29.2-linux-aarch64/bin /usr/local/ && \
+    cp -r cmake-3.29.2-linux-aarch64/share /usr/local/ && \
+    cmake --version
+
+ENV CMAKE_PREFIX_PATH=/usr/local
 RUN mkdir -p /tmp/xtensor_stack && cd /tmp/xtensor_stack && \
     git clone https://github.com/xtensor-stack/xtl.git && \
     git clone https://github.com/xtensor-stack/xsimd.git && \
@@ -132,6 +140,9 @@ RUN mkdir -p /tmp/xtensor_stack && cd /tmp/xtensor_stack && \
     cd /tmp/xtensor_stack/xtensor && mkdir build && cd build && \
     cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local && make -j3 && make install && \
     rm -rf /tmp/xtensor_stack
+
+
+RUN find /usr/local -name xtensorConfig.cmake
 
 USER ${APP_USER}
 
@@ -150,9 +161,51 @@ RUN INSTALLED=$(ls ${ROS_ROOT}/install/share) && rosdep install -y \
 	               --rosdistro ${ROS_DISTRO} \
                    --skip-keys "$(echo $INSTALLED | tr '\n' ' ') fastcdr rti-connext-dds-6.0.1 urdfdom_headers xsimd xtensor xtl"
 
-
+# seperate, to reduce error fix time (othervise we have to wait, while all packages will be compiled again)
 RUN /bin/bash -c "source /opt/ros/${ROS_VER}/install/setup.bash && colcon build \
             --merge-install --parallel-workers 3 --executor sequential\
+            --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-up-to rqt"
+
+RUN /bin/bash -c "source /opt/ros/${ROS_VER}/install/setup.bash && colcon build \
+            --merge-install --parallel-workers 2 --event-handlers console_direct+ \
+            --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-up-to rviz2"
+
+RUN mkdir -p /tmp/xtensor_stack && cd /tmp/xtensor_stack && \
+    git clone https://github.com/xtensor-stack/xtl.git && \
+    git clone https://github.com/xtensor-stack/xsimd.git && \
+    git clone https://github.com/xtensor-stack/xtensor.git && \
+    cp -r xtl/include/xtl /usr/local/include/ && \
+    cp -r xsimd/include/xsimd /usr/local/include/ && \
+    cp -r xtensor/include/xtensor /usr/local/include/ && \
+    rm -rf /tmp/xtensor_stack
+
+RUN /bin/bash -c "source /opt/ros/${ROS_VER}/install/setup.bash && colcon build \
+            --merge-install --parallel-workers 2 --event-handlers console_direct+ \
+            --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-up-to \
+            nav2_common nav2_core nav2_costmap_2d nav2_map_server nav2_util angles bond"
+
+RUN mkdir -p /tmp/xtensor_stack && cd /tmp/xtensor_stack && \
+    git clone https://github.com/xtensor-stack/xtl.git -b 0.7.2 && \
+    git clone https://github.com/xtensor-stack/xsimd.git -b 7.6.0 && \
+    git clone https://github.com/xtensor-stack/xtensor.git -b 0.23.10 && \
+    cd xtl && mkdir build && cd build && \
+    cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local && make -j3 && make install && \
+    cd /tmp/xtensor_stack/xsimd && mkdir build && cd build && \
+    cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local && make -j3 && make install && \
+    cd /tmp/xtensor_stack/xtensor && mkdir build && cd build && \
+    cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local && make -j3 && make install && \
+    rm -rf /tmp/xtensor_stack
+
+RUN /bin/bash -c "source /opt/ros/${ROS_VER}/install/setup.bash && colcon build \
+            --merge-install --parallel-workers 2 --event-handlers console_direct+ \
+            --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-up-to nav2_mppi_controller"
+
+RUN /bin/bash -c "source /opt/ros/${ROS_VER}/install/setup.bash && colcon build \
+            --merge-install --parallel-workers 2 --event-handlers console_direct+ \
+            --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-up-to navigation2"
+
+RUN /bin/bash -c "source /opt/ros/${ROS_VER}/install/setup.bash && colcon build \
+            --merge-install --parallel-workers 2 --event-handlers console_direct+ \
             --cmake-args -DCMAKE_BUILD_TYPE=Release"
 
 # remove ros source and build files.
