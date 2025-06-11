@@ -8,7 +8,6 @@ services:
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
       - ./src:/home/app/ros2_ws/src
-      - /dev:/dev
     environment:
       - DISPLAY=${DISPLAY}
       - ROS_DOMAIN_ID=42
@@ -16,4 +15,5 @@ services:
       - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
     devices:
       - /dev/input:/dev/input
-
+      - /dev/ttyUSB0:/dev/ttyUSB0
+      - /dev/video0:/dev/video0
