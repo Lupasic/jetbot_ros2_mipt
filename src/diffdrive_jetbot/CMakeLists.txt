@@ -54,6 +54,12 @@ install(
   DIRECTORY description/launch description/ros2_control description/urdf description/rviz
   DESTINATION share/diffdrive_jetbot
 )
+
+install(
+  DIRECTORY description/meshes
+  DESTINATION share/diffdrive_jetbot/description
+)
+
 install(
   DIRECTORY bringup/launch bringup/config
   DESTINATION share/diffdrive_jetbot

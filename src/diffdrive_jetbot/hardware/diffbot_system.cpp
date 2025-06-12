@@ -211,7 +211,7 @@ hardware_interface::CallbackReturn DiffDriveJetbotHardware::on_deactivate(
 }
 
 hardware_interface::return_type DiffDriveJetbotHardware::read(
-  const rclcpp::Time & /*time*/, const rclcpp::Duration & period)
+  const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
   if (!comms_.connected())
   {
