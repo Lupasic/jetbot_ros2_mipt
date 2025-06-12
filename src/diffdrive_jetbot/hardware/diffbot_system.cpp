@@ -38,22 +38,34 @@ hardware_interface::CallbackReturn DiffDriveJetbotHardware::on_init(
 
   cfg_.left_wheel_name = info_.hardware_parameters["left_wheel_name"];
   cfg_.right_wheel_name = info_.hardware_parameters["right_wheel_name"];
-  cfg_.loop_rate = std::stof(info_.hardware_parameters["loop_rate"]);
   cfg_.device = info_.hardware_parameters["device"];
   cfg_.baud_rate = std::stoi(info_.hardware_parameters["baud_rate"]);
   cfg_.timeout_ms = std::stoi(info_.hardware_parameters["timeout_ms"]);
-  cfg_.enc_counts_per_rev = std::stoi(info_.hardware_parameters["enc_counts_per_rev"]);
-  if (info_.hardware_parameters.count("pid_p") > 0)
-  {
-    cfg_.pid_p = std::stoi(info_.hardware_parameters["pid_p"]);
-    cfg_.pid_d = std::stoi(info_.hardware_parameters["pid_d"]);
-    cfg_.pid_i = std::stoi(info_.hardware_parameters["pid_i"]);
-    cfg_.pid_o = std::stoi(info_.hardware_parameters["pid_o"]);
-  }
-  else
-  {
-    RCLCPP_INFO(rclcpp::get_logger("DiffDriveJetbotHardware"), "PID values not supplied, using defaults.");
-  }
+  
+  // Motor configuration parameters from xacro
+  cfg_.mtype = std::stoi(info_.hardware_parameters["mtype"]);
+  cfg_.deadzone = std::stoi(info_.hardware_parameters["deadzone"]);
+  cfg_.mline = std::stoi(info_.hardware_parameters["mline"]);
+  cfg_.mphase = std::stoi(info_.hardware_parameters["mphase"]);
+  cfg_.wdiameter = std::stoi(info_.hardware_parameters["wdiameter"]);
+  
+  // Calculate encoder counts per revolution: mline * 4 * mphase
+  cfg_.enc_counts_per_rev = cfg_.mline * 4 * cfg_.mphase;
+  RCLCPP_INFO(rclcpp::get_logger("DiffDriveJetbotHardware"), 
+              "Calculated enc_counts_per_rev: %d (mline: %d, mphase: %d)", 
+              cfg_.enc_counts_per_rev, cfg_.mline, cfg_.mphase);
+  
+  cfg_.pid_p = std::stod(info_.hardware_parameters["pid_p"]);
+  cfg_.pid_d = std::stod(info_.hardware_parameters["pid_d"]);
+  cfg_.pid_i = std::stod(info_.hardware_parameters["pid_i"]);
+  
+  cfg_.max_motor_rpm = std::stod(info_.hardware_parameters["max_motor_rpm"]);
+  
+  // Convert RPM to rad/s: RPM * 2π / 60
+  cfg_.max_motor_rads = cfg_.max_motor_rpm * 2.0 * M_PI / 60.0;
+  RCLCPP_INFO(rclcpp::get_logger("DiffDriveJetbotHardware"), 
+              "Max motor speed: %.2f RPM = %.2f rad/s", 
+              cfg_.max_motor_rpm, cfg_.max_motor_rads);
   
 
   wheel_l_.setup(cfg_.left_wheel_name, cfg_.enc_counts_per_rev);
@@ -151,6 +163,11 @@ hardware_interface::CallbackReturn DiffDriveJetbotHardware::on_configure(
     comms_.disconnect();
   }
   comms_.connect(cfg_.device, cfg_.baud_rate, cfg_.timeout_ms);
+  
+  // Setup all motor parameters
+  comms_.setup_motor_parameters(cfg_.mtype, cfg_.deadzone, cfg_.mline, cfg_.mphase, cfg_.wdiameter, cfg_.pid_p, cfg_.pid_i, cfg_.pid_d);
+  comms_.read_flash_settings();
+  
   RCLCPP_INFO(rclcpp::get_logger("DiffDriveJetbotHardware"), "Successfully configured!");
 
   return hardware_interface::CallbackReturn::SUCCESS;
@@ -178,10 +195,7 @@ hardware_interface::CallbackReturn DiffDriveJetbotHardware::on_activate(
   {
     return hardware_interface::CallbackReturn::ERROR;
   }
-  if (cfg_.pid_p > 0)
-  {
-    comms_.set_pid_values(cfg_.pid_p,cfg_.pid_d,cfg_.pid_i,cfg_.pid_o);
-  }
+  
   RCLCPP_INFO(rclcpp::get_logger("DiffDriveJetbotHardware"), "Successfully activated!");
 
   return hardware_interface::CallbackReturn::SUCCESS;
@@ -204,17 +218,25 @@ hardware_interface::return_type DiffDriveJetbotHardware::read(
     return hardware_interface::return_type::ERROR;
   }
 
-  comms_.read_encoder_values(wheel_l_.enc, wheel_r_.enc);
-
-  double delta_seconds = period.seconds();
-
-  double pos_prev = wheel_l_.pos;
+  // Read total encoder counts
+  double left_enc_total, right_enc_total;
+  comms_.read_encoder_data(left_enc_total, right_enc_total, 1);
+  
+  // Update wheel encoder values
+  wheel_l_.enc = left_enc_total;
+  wheel_r_.enc = right_enc_total;
+  
+  // Update wheel positions based on encoder counts
   wheel_l_.pos = wheel_l_.calc_enc_angle();
-  wheel_l_.vel = (wheel_l_.pos - pos_prev) / delta_seconds;
-
-  pos_prev = wheel_r_.pos;
   wheel_r_.pos = wheel_r_.calc_enc_angle();
-  wheel_r_.vel = (wheel_r_.pos - pos_prev) / delta_seconds;
+  
+  // Read current motor speeds directly from hardware
+  double left_speed_rads, right_speed_rads;
+  comms_.read_encoder_data(left_speed_rads, right_speed_rads, 3);
+  
+  // Update wheel velocities with direct readings
+  wheel_l_.vel = left_speed_rads / 1000.0 * cfg_.max_motor_rads;
+  wheel_r_.vel = right_speed_rads / 1000.0 * cfg_.max_motor_rads;
 
   return hardware_interface::return_type::OK;
 }
@@ -227,9 +249,9 @@ hardware_interface::return_type diffdrive_jetbot ::DiffDriveJetbotHardware::writ
     return hardware_interface::return_type::ERROR;
   }
 
-  int motor_l_counts_per_loop = wheel_l_.cmd / wheel_l_.rads_per_count / cfg_.loop_rate;
-  int motor_r_counts_per_loop = wheel_r_.cmd / wheel_r_.rads_per_count / cfg_.loop_rate;
-  comms_.set_motor_values(motor_l_counts_per_loop, motor_r_counts_per_loop);
+  int motor_l_ticks = wheel_l_.cmd * 1000.0 / cfg_.max_motor_rads;
+  int motor_r_ticks = wheel_r_.cmd * 1000.0 / cfg_.max_motor_rads;
+  comms_.set_motor_speed_values(motor_l_ticks, motor_r_ticks);
   return hardware_interface::return_type::OK;
 }
 

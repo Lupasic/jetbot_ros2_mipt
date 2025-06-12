@@ -43,15 +43,20 @@ struct Config
 {
   std::string left_wheel_name = "";
   std::string right_wheel_name = "";
-  float loop_rate = 0.0;
   std::string device = "";
   int baud_rate = 0;
   int timeout_ms = 0;
   int enc_counts_per_rev = 0;
-  int pid_p = 0;
-  int pid_d = 0;
-  int pid_i = 0;
-  int pid_o = 0;
+  double pid_p = 0.0;
+  double pid_d = 0.0;
+  double pid_i = 0.0;
+  int mtype = 0;
+  int deadzone = 0;
+  int mline = 0;
+  int mphase = 0;
+  int wdiameter = 0;
+  double max_motor_rpm = 0.0;
+  double max_motor_rads = 0.0;
 };
 
 
