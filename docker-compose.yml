@@ -1,6 +1,7 @@
 services:
   jetbot:
-    image: jetbot_main_docker
+    # image: jetbot_main_docker
+    image: jetbot_full_ros2
 
     runtime: nvidia
     restart: always
@@ -16,4 +17,5 @@ services:
     devices:
       - /dev/input:/dev/input
       - /dev/ttyUSB0:/dev/ttyUSB0
+      - /dev/ttyUSB1:/dev/ttyUSB1
       - /dev/video0:/dev/video0
