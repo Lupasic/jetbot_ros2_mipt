@@ -16,6 +16,6 @@ services:
       - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
     devices:
       - /dev/input:/dev/input
-      - /dev/ttyUSB0:/dev/ttyUSB0
-      - /dev/ttyUSB1:/dev/ttyUSB1
+      - /dev/ttyLIDAR:/dev/ttyLIDAR
+      - /dev/ttyMOTOR:/dev/ttyMOTOR
       - /dev/video0:/dev/video0
