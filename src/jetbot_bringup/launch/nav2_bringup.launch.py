@@ -6,10 +6,7 @@ from launch.substitutions import PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
-    nav2_include = GroupAction(
-        actions=[
-            SetRemap(src='/cmd_vel', dst='/diffbot_base_controller/cmd_vel'),
-            IncludeLaunchDescription(
+    nav2_include = IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(PathJoinSubstitution([
                     FindPackageShare("nav2_bringup"),
                     "launch",
@@ -20,10 +17,8 @@ def generate_launch_description():
                     'params_file': PathJoinSubstitution([
                         FindPackageShare("jetbot_bringup"), 
                         "config", 
-                        "nav2_params.yaml"
+                        "nav2_default_params.yaml"
                     ]),
                 }.items()
             )
-        ]
-    )
     return LaunchDescription([nav2_include])

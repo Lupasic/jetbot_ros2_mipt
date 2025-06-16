@@ -57,6 +57,10 @@ struct Config
   int wdiameter = 0;
   double max_motor_rpm = 0.0;
   double max_motor_rads = 0.0;
+  // Initial encoder values to track relative movement
+  double initial_left_enc = 0.0;
+  double initial_right_enc = 0.0;
+  bool encoders_initialized = false;
 };
 
 

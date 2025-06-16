@@ -196,6 +196,24 @@ hardware_interface::CallbackReturn DiffDriveJetbotHardware::on_activate(
     return hardware_interface::CallbackReturn::ERROR;
   }
   
+  // Read and store initial encoder values
+  double initial_left, initial_right;
+  comms_.read_encoder_data(initial_left, initial_right, 1);
+  
+  cfg_.initial_left_enc = initial_left;
+  cfg_.initial_right_enc = initial_right;
+  cfg_.encoders_initialized = true;
+  
+  // Reset wheel positions to zero
+  wheel_l_.pos = 0.0;
+  wheel_r_.pos = 0.0;
+  wheel_l_.vel = 0.0;
+  wheel_r_.vel = 0.0;
+  
+  RCLCPP_INFO(rclcpp::get_logger("DiffDriveJetbotHardware"), 
+              "Initial encoder values - Left: %.2f, Right: %.2f", 
+              cfg_.initial_left_enc, cfg_.initial_right_enc);
+  
   RCLCPP_INFO(rclcpp::get_logger("DiffDriveJetbotHardware"), "Successfully activated!");
 
   return hardware_interface::CallbackReturn::SUCCESS;
@@ -205,6 +223,14 @@ hardware_interface::CallbackReturn DiffDriveJetbotHardware::on_deactivate(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
   RCLCPP_INFO(rclcpp::get_logger("DiffDriveJetbotHardware"), "Deactivating ...please wait...");
+  
+  // Stop motors
+  comms_.set_motor_speed_values(0, 0);
+  comms_.set_motor_pwm_values(0, 0);
+  
+  // Reset encoder initialization flag
+  cfg_.encoders_initialized = false;
+  
   RCLCPP_INFO(rclcpp::get_logger("DiffDriveJetbotHardware"), "Successfully deactivated!");
 
   return hardware_interface::CallbackReturn::SUCCESS;
@@ -218,17 +244,32 @@ hardware_interface::return_type DiffDriveJetbotHardware::read(
     return hardware_interface::return_type::ERROR;
   }
 
-  // Read total encoder counts
-  double left_enc_total, right_enc_total;
-  comms_.read_encoder_data(left_enc_total, right_enc_total, 1);
+  // Read current encoder counts
+  double current_left_enc, current_right_enc;
+  comms_.read_encoder_data(current_left_enc, current_right_enc, 1);
   
-  // Update wheel encoder values
-  wheel_l_.enc = left_enc_total;
-  wheel_r_.enc = right_enc_total;
-  
-  // Update wheel positions based on encoder counts
-  wheel_l_.pos = wheel_l_.calc_enc_angle();
-  wheel_r_.pos = wheel_r_.calc_enc_angle();
+  if (cfg_.encoders_initialized)
+  {
+    // Calculate relative encoder counts from initial values
+    double relative_left_enc = current_left_enc - cfg_.initial_left_enc;
+    double relative_right_enc = current_right_enc - cfg_.initial_right_enc;
+    
+    // Update wheel encoder values with relative counts
+    wheel_l_.enc = relative_left_enc;
+    wheel_r_.enc = relative_right_enc;
+    
+    // Update wheel positions based on relative encoder counts
+    wheel_l_.pos = wheel_l_.calc_enc_angle();
+    wheel_r_.pos = wheel_r_.calc_enc_angle();
+  }
+  else
+  {
+    // Fallback: use raw encoder values if not initialized
+    wheel_l_.enc = current_left_enc;
+    wheel_r_.enc = current_right_enc;
+    wheel_l_.pos = wheel_l_.calc_enc_angle();
+    wheel_r_.pos = wheel_r_.calc_enc_angle();
+  }
   
   // Read current motor speeds directly from hardware
   double left_speed_rads, right_speed_rads;

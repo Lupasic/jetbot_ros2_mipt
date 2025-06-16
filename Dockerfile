@@ -13,13 +13,20 @@ RUN apt-get update && apt-get install -q -y \
   rm -rf /var/lib/apt/lists/*
 
 WORKDIR ${ROS_ROOT}/src
-RUN git clone https://github.com/ros/xacro.git -b ros2
+RUN git clone https://github.com/ros/xacro.git -b ros2 && \ 
+git clone https://github.com/ros-teleop/twist_mux.git -b humble && \
+git clone https://github.com/ros-visualization/rqt_robot_steering.git -b 1.0.1
 
 WORKDIR ${ROS_ROOT}
 
 RUN /bin/bash -c "source /opt/ros/${ROS_VER}/install/setup.bash && colcon build \
-            --merge-install --parallel-workers 3 --packages-up-to xacro"
+            --merge-install --parallel-workers 3 --packages-up-to \
+             xacro twist_mux rqt_robot_steering"
 
+RUN rm -rf ${ROS_ROOT}/src && \
+rm -rf ${ROS_ROOT}/log && \
+rm -rf ${ROS_ROOT}/build && \
+rm -rf /var/lib/apt/lists/*
 
 USER ${APP_USER}
 

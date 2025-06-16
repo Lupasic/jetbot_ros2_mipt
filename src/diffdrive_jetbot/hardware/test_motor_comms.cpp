@@ -12,7 +12,7 @@ int main()
 
     // Инициализируем соединение — предположим, есть метод `setup()` или `connect()`
     // Замените, если метод называется иначе
-    motor_comm.connect("/dev/ttyUSB0", 115200,200);  // или motor_comm.setup(...)
+    motor_comm.connect("/dev/ttyMOTOR", 115200,200);  // или motor_comm.setup(...)
 
     // Читаем значения энкодеров
     double init_l_ticks =0;
