@@ -1,4 +1,4 @@
-FROM jetbot_ros2_base
+FROM lupasic/jetbot_ros_humble_base:1.0
 # Base dockerfile in docker_configs Dockerfile_base. It was built on PC
 ARG ROS_VER=humble
 
@@ -15,13 +15,13 @@ RUN apt-get update && apt-get install -q -y \
 WORKDIR ${ROS_ROOT}/src
 RUN git clone https://github.com/ros/xacro.git -b ros2 && \ 
 git clone https://github.com/ros-teleop/twist_mux.git -b humble && \
-git clone https://github.com/ros-visualization/rqt_robot_steering.git -b 1.0.1
+git clone https://github.com/ros-visualization/rqt_robot_steering.git -b 1.0.1 && \
+git clone https://github.com/ros-tooling/topic_tools.git -b humble
 
 WORKDIR ${ROS_ROOT}
 
 RUN /bin/bash -c "source /opt/ros/${ROS_VER}/install/setup.bash && colcon build \
-            --merge-install --parallel-workers 3 --packages-up-to \
-             xacro twist_mux rqt_robot_steering"
+            --merge-install --parallel-workers 3"
 
 RUN rm -rf ${ROS_ROOT}/src && \
 rm -rf ${ROS_ROOT}/log && \

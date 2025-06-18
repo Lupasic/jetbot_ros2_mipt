@@ -8,6 +8,18 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
 
+    twist_stamped_to_twist = Node(
+        package='topic_tools',
+        executable='relay_field',
+        name='twist_stamped_to_twist',
+        arguments=[
+            '/cmd_vel_robot_steering_stamped',      # input topic
+            '/cmd_vel_robot_steering',              # output topic
+            'geometry_msgs/msg/Twist',              # output type
+            '{linear: m.twist.linear, angular: m.twist.angular}'                               # expression on m (m — входящее сообщение)
+        ]
+    )
+
     twist_mux = Node(
             package="twist_mux",
             executable="twist_mux",
@@ -36,6 +48,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        twist_stamped_to_twist,
         twist_mux,
         lidar_launch,
         diffbot_launch,

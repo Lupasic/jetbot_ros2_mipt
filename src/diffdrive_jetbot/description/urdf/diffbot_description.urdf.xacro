@@ -4,10 +4,10 @@
   <xacro:macro name="diffbot" params="prefix">
 
   
-  <link name="${prefix}base_link"/>
-  <!-- Was base_link, now body_link -->
+  <link name="${prefix}base_footprint"/>
+
   <link
-    name="${prefix}body_link">
+    name="${prefix}base_link">
     <inertial>
       <origin
         xyz="-0.025609 0.0093176 0.034957"
@@ -28,7 +28,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://diffdrive_jetbot/description/meshes/body_link.STL" />
+          filename="package://diffdrive_jetbot/description/meshes/base_link.STL" />
       </geometry>
       <material
         name="">
@@ -42,11 +42,11 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://diffdrive_jetbot/description/meshes/body_link.STL" />
+          filename="package://diffdrive_jetbot/description/meshes/base_link.STL" />
       </geometry>
     </collision>
   </link>
-  <!-- Fixed joint between base_link and body_link -->
+  <!-- Fixed joint between base_footprint and base_link -->
   <joint
     name="${prefix}body_fix_joint"
     type="fixed">
@@ -54,9 +54,9 @@
       xyz="0 0 0.035"
       rpy="-1.5708 0 0" />
     <parent
-      link="${prefix}base_link" />
+      link="${prefix}base_footprint" />
     <child
-      link="${prefix}body_link" />
+      link="${prefix}base_link" />
     <axis
       xyz="0 0 0" />
   </joint>
@@ -107,7 +107,7 @@
       xyz="-0.083 0.0208 0"
       rpy="-1.5708 0 3.1416" />
     <parent
-      link="${prefix}body_link" />
+      link="${prefix}base_link" />
     <child
       link="${prefix}caster_ball_link" />
     <axis
@@ -160,7 +160,7 @@
       xyz="0.053557 -0.057568 0"
       rpy="1.9199 -1.5708 3.1416" />
     <parent
-      link="${prefix}body_link" />
+      link="${prefix}base_link" />
     <child
       link="${prefix}camera_link" />
     <axis
@@ -217,7 +217,7 @@
       xyz="-0.011026 -0.1512 0 "
       rpy="1.5708 0 0" />
     <parent
-      link="${prefix}body_link" />
+      link="${prefix}base_link" />
     <child
       link="${prefix}lidar_link" />
     <axis
@@ -270,7 +270,7 @@
       xyz="0 0 0.0575"
       rpy="1.5708 0 0" />
     <parent
-      link="${prefix}body_link" />
+      link="${prefix}base_link" />
     <child
       link="${prefix}left_wheel_link" />
     <axis
@@ -280,22 +280,22 @@
     name="${prefix}right_wheel_link">
     <inertial>
       <origin
-        xyz="0 0 0"
+        xyz="-3.04495944265183E-05 0.0183179040454366 -1.07396547774597E-07"
         rpy="0 0 0" />
       <mass
-        value="0" />
+        value="0.388137366198046" />
       <inertia
-        ixx="0"
-        ixy="0"
-        ixz="0"
-        iyy="0"
-        iyz="0"
-        izz="0" />
+        ixx="0.000163568162825962"
+        ixy="-1.71522947947033E-07"
+        ixz="-2.55253489205791E-08"
+        iyy="0.000281670214792073"
+        iyz="-1.06397401901507E-09"
+        izz="0.000163656330155147" />
     </inertial>
     <visual>
       <origin
         xyz="0 0 0"
-        rpy="0 0 0" />
+        rpy="0 0 3.14359" />
       <geometry>
         <mesh
           filename="package://diffdrive_jetbot/description/meshes/right_wheel_link.STL" />
@@ -309,7 +309,7 @@
     <collision>
       <origin
         xyz="0 0 0"
-        rpy="0 0 0" />
+        rpy="0 0 3.14359" />
       <geometry>
         <mesh
           filename="package://diffdrive_jetbot/description/meshes/right_wheel_link.STL" />
@@ -321,9 +321,9 @@
     type="continuous">
     <origin
       xyz="0 0 -0.0575"
-      rpy="-1.5708 0 -0.57871" />
+      rpy="-1.5708 3.14359 3.14359" />
     <parent
-      link="${prefix}body_link" />
+      link="${prefix}base_link" />
     <child
       link="${prefix}right_wheel_link" />
     <axis
