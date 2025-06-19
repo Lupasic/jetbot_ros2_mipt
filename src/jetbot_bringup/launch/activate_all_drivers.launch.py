@@ -20,6 +20,28 @@ def generate_launch_description():
         ]
     )
 
+    joy_node = Node(
+        package='joy_linux',
+        executable='joy_linux_node',
+        name='joy_node',
+        parameters=[{
+            'dev': "/dev/input/js0"
+        }]
+    )
+
+    teleop_twist_joy_node = Node(
+        package='teleop_twist_joy',
+        executable='teleop_node',
+        name='teleop_twist_joy_node',
+        parameters=[
+            PathJoinSubstitution([
+                FindPackageShare("jetbot_bringup"), "config", "joy.yaml"
+            ]),
+            {'publish_stamped_twist': False}
+        ],
+        remappings=[('cmd_vel', 'cmd_vel_joy')]
+    )
+
     twist_mux = Node(
             package="twist_mux",
             executable="twist_mux",
@@ -48,7 +70,9 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        twist_stamped_to_twist,
+        # twist_stamped_to_twist,
+        joy_node,
+        teleop_twist_joy_node,
         twist_mux,
         lidar_launch,
         diffbot_launch,

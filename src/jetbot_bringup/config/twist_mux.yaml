@@ -4,12 +4,12 @@ twist_mux:
       navigation:
         topic   : cmd_vel
         timeout : 0.5
+        priority: 50
+      joystick:
+        topic   : cmd_vel_joy
+        timeout : 0.5
+        priority: 90
+      robot_steering:
+        topic   : cmd_vel_robot_steering
+        timeout : 0.5
         priority: 100
-      # joystick:
-      #   topic   : cmd_vel_joy
-      #   timeout : 0.5
-      #   priority: 50
-      # robot_steering:
-      #   topic   : cmd_vel_robot_steering
-      #   timeout : 0.5
-      #   priority: 90
