@@ -1,6 +1,9 @@
 <?xml version="1.0"?>
 <!-- Basic differential drive mobile base -->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="diffdrive_robot">
+
+  <xacro:arg name="robot_ip" default="127.0.0.1" />
+  <xacro:arg name="mesh_port" default="8000" />
   <xacro:arg name="prefix" default="" />
 
   <xacro:include filename="$(find diffdrive_jetbot)/urdf/diffbot_description.urdf.xacro" />

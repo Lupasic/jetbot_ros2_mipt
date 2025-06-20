@@ -47,11 +47,27 @@ def generate_launch_description():
         have to be updated.",
         )
     )
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            "robot_ip",
+            default_value="127.0.0.1",
+            description="IP address of the robot for HTTP mesh server",
+        )
+    )
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            "mesh_port",
+            default_value="8000",
+            description="Port for HTTP mesh server",
+        )
+    )
 
     # Initialize Arguments
     description_package = LaunchConfiguration("description_package")
     description_file = LaunchConfiguration("description_file")
     prefix = LaunchConfiguration("prefix")
+    robot_ip = LaunchConfiguration("robot_ip")
+    mesh_port = LaunchConfiguration("mesh_port")
 
     # Get URDF via xacro
     robot_description_content = Command(
@@ -64,6 +80,12 @@ def generate_launch_description():
             " ",
             "prefix:=",
             prefix,
+            " ",
+            "robot_ip:=",
+            robot_ip,
+            " ",
+            "mesh_port:=",
+            mesh_port,
         ]
     )
     robot_description = {"robot_description": robot_description_content}

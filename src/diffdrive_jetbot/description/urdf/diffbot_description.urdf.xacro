@@ -28,7 +28,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://diffdrive_jetbot/description/meshes/base_link.STL" />
+          filename="http://diffbot_ip:8080/meshes/base_link.STL" />
       </geometry>
       <material
         name="">
@@ -42,7 +42,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://diffdrive_jetbot/description/meshes/base_link.STL" />
+          filename="http://diffbot_ip:8080/meshes/base_link.STL" />
       </geometry>
     </collision>
   </link>
@@ -82,7 +82,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://diffdrive_jetbot/description/meshes/caster_ball_link.STL" />
+          filename="http://diffbot_ip:8080/meshes/caster_ball_link.STL" />
       </geometry>
       <material
         name="">
@@ -96,7 +96,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://diffdrive_jetbot/description/meshes/caster_ball_link.STL" />
+          filename="http://diffbot_ip:8080/meshes/caster_ball_link.STL" />
       </geometry>
     </collision>
   </link>
@@ -135,7 +135,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://diffdrive_jetbot/description/meshes/camera_link.STL" />
+          filename="http://diffbot_ip:8080/meshes/camera_link.STL" />
       </geometry>
       <material
         name="">
@@ -149,7 +149,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://diffdrive_jetbot/description/meshes/camera_link.STL" />
+          filename="http://diffbot_ip:8080/meshes/camera_link.STL" />
       </geometry>
     </collision>
   </link>
@@ -189,7 +189,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://diffdrive_jetbot/description/meshes/lidar_link.STL" />
+          filename="http://diffbot_ip:8080/meshes/lidar_link.STL" />
       </geometry>
       <material
         name="">
@@ -204,7 +204,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://diffdrive_jetbot/description/meshes/lidar_link.STL" />
+          filename="http://diffbot_ip:8080/meshes/lidar_link.STL" />
       </geometry>
     </collision>
   </link>
@@ -245,7 +245,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://diffdrive_jetbot/description/meshes/left_wheel_link.STL" />
+          filename="http://diffbot_ip:8080/meshes/left_wheel_link.STL" />
       </geometry>
       <material
         name="">
@@ -259,7 +259,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://diffdrive_jetbot/description/meshes/left_wheel_link.STL" />
+          filename="http://diffbot_ip:8080/meshes/left_wheel_link.STL" />
       </geometry>
     </collision>
   </link>
@@ -298,7 +298,7 @@
         rpy="0 0 3.14359" />
       <geometry>
         <mesh
-          filename="package://diffdrive_jetbot/description/meshes/right_wheel_link.STL" />
+          filename="http://diffbot_ip:8080/meshes/right_wheel_link.STL" />
       </geometry>
       <material
         name="">
@@ -312,7 +312,7 @@
         rpy="0 0 3.14359" />
       <geometry>
         <mesh
-          filename="package://diffdrive_jetbot/description/meshes/right_wheel_link.STL" />
+          filename="http://diffbot_ip:8080/meshes/right_wheel_link.STL" />
       </geometry>
     </collision>
   </link>

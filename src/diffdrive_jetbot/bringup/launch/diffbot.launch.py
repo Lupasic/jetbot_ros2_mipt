@@ -13,15 +13,36 @@
 # limitations under the License.
 
 from launch import LaunchDescription
-from launch.actions import RegisterEventHandler
+from launch.actions import RegisterEventHandler, DeclareLaunchArgument, ExecuteProcess
 from launch.event_handlers import OnProcessExit
-from launch.substitutions import Command, FindExecutable, PathJoinSubstitution
+from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
 
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
+    # Declare IP address argument for HTTP mesh server
+    declared_arguments = []
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            "robot_ip",
+            default_value="127.0.0.1",
+            description="IP address of the robot for HTTP mesh server",
+        )
+    )
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            "mesh_port",
+            default_value="8000",
+            description="Port for HTTP mesh server",
+        )
+    )
+
+    # Initialize Arguments
+    robot_ip = LaunchConfiguration("robot_ip")
+    mesh_port = LaunchConfiguration("mesh_port")
+
     # Get URDF via xacro
     robot_description_content = Command(
         [
@@ -30,6 +51,12 @@ def generate_launch_description():
             PathJoinSubstitution(
                 [FindPackageShare("diffdrive_jetbot"), "urdf", "diffbot.urdf.xacro"]
             ),
+            " ",
+            "robot_ip:=",
+            robot_ip,
+            " ",
+            "mesh_port:=",
+            mesh_port,
         ]
     )
     robot_description = {"robot_description": robot_description_content}
@@ -41,9 +68,16 @@ def generate_launch_description():
             "diffbot_controllers.yaml",
         ]
     )
-    # rviz_config_file = PathJoinSubstitution(
-    #     [FindPackageShare("diffdrive_jetbot"), "rviz", "diffbot.rviz"]
-    # )
+
+    # Start HTTP server for mesh files
+    mesh_server = ExecuteProcess(
+        cmd=[
+            "python3", "-m", "http.server", mesh_port,
+            "--directory", PathJoinSubstitution([FindPackageShare("diffdrive_jetbot"), "description"])
+        ],
+        name="mesh_http_server",
+        output="log"
+    )
 
     control_node = Node(
         package="controller_manager",
@@ -96,6 +130,7 @@ def generate_launch_description():
     )
 
     nodes = [
+        mesh_server,
         control_node,
         robot_state_pub_node,
         joint_state_broadcaster_spawner,
@@ -103,4 +138,4 @@ def generate_launch_description():
         delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
     ]
 
-    return LaunchDescription(nodes)
+    return LaunchDescription(declared_arguments + nodes)
