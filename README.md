@@ -23,6 +23,32 @@ This project provides a full ROS2 stack for JetBot robots including:
   - USB camera via `/dev/video0`
   - Gamepad controller via `/dev/input/js0`
 
+## Hardware Setup
+
+### USB Device Mapping (Required)
+Before running the Docker containers, you need to set up consistent device names for your hardware. It should be done only ones:
+
+```bash
+# Run on the JetBot host system (NOT inside Docker)
+cd general_scripts
+sudo ./create_udev_rules.sh
+```
+
+This script:
+- Creates symbolic links for USB devices with consistent names
+- Maps motor controller (CH340 chip) to `/dev/ttyMOTOR`
+- Maps RPLidar (CP210x chip) to `/dev/ttyLIDAR`
+- Automatically detects devices by USB vendor/product IDs
+
+**Device mapping details:**
+- **Motors**: `ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7522"` → `/dev/ttyMOTOR`
+- **LIDAR**: `ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60"` → `/dev/ttyLIDAR`
+
+After running the script, verify device availability:
+```bash
+ls -la /dev/tty{MOTOR,LIDAR}
+```
+
 ## Docker Architecture
 
 This project uses a two-stage Docker build process:
@@ -41,7 +67,17 @@ This project uses a two-stage Docker build process:
 
 ## Quick Start
 
-### 1. Building the Project
+### 1. Hardware Setup
+```bash
+# Set up device mapping (run on JetBot host)
+cd general_scripts
+sudo ./create_udev_rules.sh
+
+# Verify devices are accessible
+ls -la /dev/tty{MOTOR,LIDAR}
+```
+
+### 2. Building the Project
 
 #### Option A: Complete Local Build (on JetBot)
 ```bash
@@ -84,7 +120,7 @@ docker load < jetbot_ros2_base.tar
 docker build -t jetbot_full_ros2 .
 ```
 
-### 2. Building Your ROS2 Packages
+### 3. Building Your ROS2 Packages
 
 #### Initial setup
 ```bash
@@ -163,6 +199,18 @@ ros2 launch jetbot_bringup localization.launch.py
 ```
 
 ## General Scripts
+
+### Hardware Setup Scripts
+Located in `general_scripts/`:
+
+- **`create_udev_rules.sh`**: Sets up USB device symbolic links (run on host system)
+  ```bash
+  # Must be run on JetBot host (outside Docker)
+  sudo ./create_udev_rules.sh
+  ```
+  Creates consistent device names:
+  - Motor controller → `/dev/ttyMOTOR`
+  - RPLidar → `/dev/ttyLIDAR`
 
 ### Docker Build Scripts
 Located in `docker_configs/`:
@@ -255,7 +303,11 @@ Edit `config/nav2_default_params.yaml` for:
 ## Troubleshooting
 
 ### Common Issues
-1. **Device permissions**: Ensure user has access to `/dev/ttyMOTOR` and `/dev/ttyLIDAR`
+1. **Device permissions**: 
+   - Ensure udev rules are properly installed: `sudo ./general_scripts/create_udev_rules.sh`
+   - Check device availability: `ls -la /dev/tty{MOTOR,LIDAR}`
+   - Verify USB connections and device IDs: `lsusb`
+
 2. **ROS_DOMAIN_ID**: Set consistent domain ID across all nodes
 3. **Transform errors**: Check that all required transforms are published
 4. **Build failures**: Check available memory (use fewer parallel workers if needed)
@@ -274,6 +326,11 @@ ros2 run tf2_tools view_frames
 
 # Check build logs
 colcon build --event-handlers console_direct+
+
+# Test motor communication (inside container)
+cd ~/ros2_ws/src/diffdrive_jetbot/hardware
+g++ -o test_motor_comms test_motor_comms.cpp -lserial
+./test_motor_comms
 ```
 
 ## Contributing
