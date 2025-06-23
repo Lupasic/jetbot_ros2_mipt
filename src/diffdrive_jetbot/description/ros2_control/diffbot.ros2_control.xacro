@@ -10,7 +10,7 @@
         <param name="right_wheel_name">right_wheel_continuous_joint</param>
         <param name="device">/dev/ttyMOTOR</param>
         <param name="baud_rate">115200</param>
-        <param name="timeout_ms">20</param>
+        <param name="timeout_ms">10</param>
 
         <param name="mtype">1</param>
         <param name="deadzone">1600</param>

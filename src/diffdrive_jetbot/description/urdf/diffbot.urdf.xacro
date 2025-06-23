@@ -14,7 +14,7 @@
   <!-- Import diffbot ros2_control description -->
   <xacro:include filename="$(find diffdrive_jetbot)/ros2_control/diffbot.ros2_control.xacro" />
 
-  <xacro:diffbot prefix="$(arg prefix)" />
+  <xacro:diffbot prefix="$(arg prefix)" robot_ip="$(arg robot_ip)" mesh_port="$(arg mesh_port)" />
 
   <xacro:diffbot_ros2_control
     name="DiffBot" prefix="$(arg prefix)"/>

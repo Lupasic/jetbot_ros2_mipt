@@ -64,14 +64,16 @@ public:
   {
     std::stringstream ss;
     ss << "$spd:" << val_1 << "," << -val_2 << ",0,0#\r";
-    send_command_and_wait(ss.str());
+    serial_conn_.Write(ss.str());
+    // send_command_and_wait(ss.str());
   }
 
   void set_motor_pwm_values(int val_1, int val_2)
   {
     std::stringstream ss;
     ss << "$pwm:" << val_1 << "," << -val_2 << ",0,0#\r";
-    send_command_and_wait(ss.str());
+    // send_command_and_wait(ss.str());
+    serial_conn_.Write(ss.str());
   }
 
   void set_pwm_pid_values(float k_p, float k_d, float k_i)

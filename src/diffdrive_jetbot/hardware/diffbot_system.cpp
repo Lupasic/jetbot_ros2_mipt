@@ -239,6 +239,8 @@ hardware_interface::CallbackReturn DiffDriveJetbotHardware::on_deactivate(
 hardware_interface::return_type DiffDriveJetbotHardware::read(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
+  // auto start_time = std::chrono::steady_clock::now();
+
   if (!comms_.connected())
   {
     return hardware_interface::return_type::ERROR;
@@ -279,12 +281,28 @@ hardware_interface::return_type DiffDriveJetbotHardware::read(
   wheel_l_.vel = left_speed_rads / 1000.0 * cfg_.max_motor_rads;
   wheel_r_.vel = right_speed_rads / 1000.0 * cfg_.max_motor_rads;
 
+  // auto end_time = std::chrono::steady_clock::now();
+  // auto duration_ms = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+  
+  // double frequency_hz = 0.0;
+  // if (duration_ms > 0) {
+  //   frequency_hz = 1000000.0 / static_cast<double>(duration_ms);
+  // }
+
+  // RCLCPP_DEBUG(
+  //   rclcpp::get_logger("DiffDriveJetbotHardware"),
+  //   "read() executed in %ld µs (~%.2f Hz)", duration_ms, frequency_hz
+  // );
+
   return hardware_interface::return_type::OK;
 }
 
 hardware_interface::return_type diffdrive_jetbot ::DiffDriveJetbotHardware::write(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
+
+  // auto start_time = std::chrono::steady_clock::now();
+
   if (!comms_.connected())
   {
     return hardware_interface::return_type::ERROR;
@@ -293,6 +311,20 @@ hardware_interface::return_type diffdrive_jetbot ::DiffDriveJetbotHardware::writ
   int motor_l_ticks = wheel_l_.cmd * 1000.0 / cfg_.max_motor_rads;
   int motor_r_ticks = wheel_r_.cmd * 1000.0 / cfg_.max_motor_rads;
   comms_.set_motor_speed_values(motor_l_ticks, motor_r_ticks);
+
+  // auto end_time = std::chrono::steady_clock::now();
+  // auto duration_ms = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
+  
+  // double frequency_hz = 0.0;
+  // if (duration_ms > 0) {
+  //   frequency_hz = 1000000.0 / static_cast<double>(duration_ms);
+  // }
+
+  // RCLCPP_DEBUG(
+  //   rclcpp::get_logger("DiffDriveJetbotHardware"),
+  //   "write() executed in %ld µs (~%.2f Hz)", duration_ms, frequency_hz
+  // );
+
   return hardware_interface::return_type::OK;
 }
 
