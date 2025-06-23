@@ -17,7 +17,7 @@ def generate_launch_description():
                     'params_file': PathJoinSubstitution([
                         FindPackageShare("jetbot_bringup"), 
                         "config", 
-                        "nav2_default_params.yaml"
+                        "nav2_default_params.yaml",
                     ]),
                 }.items()
             )
