@@ -198,6 +198,44 @@ For localization against a pre-built map:
 ros2 launch jetbot_bringup localization.launch.py
 ```
 
+### PID Controller Tuning
+This project includes a standalone interactive tool for tuning the motor PID controllers. This is crucial for achieving stable and responsive robot movement.
+
+**1. Build the Tuning Tool**
+
+The tool is not part of the main `colcon` build. You need to compile it manually inside the container.
+
+```bash
+# Enter the container
+docker exec -it --privileged jetbot_ros2_mipt-jetbot-1 bash
+
+# Navigate to the hardware source directory
+cd ~/ros2_ws/src/diffdrive_jetbot/hardware
+
+# Compile the tool
+g++ -I./include/diffdrive_jetbot -o pid_tune pid_tune.cpp -lserial -lpthread
+```
+
+**2. Run the Tuning Tool**
+
+Once compiled, run the tool from the same directory:
+```bash
+./pid_tune
+```
+
+**3. The Tuning Process**
+
+The tool guides you through an interactive process:
+1.  **Initial Parameters**: It will first ask for "ultimate gain" (Ku) and "ultimate period" (Tu) to calculate initial PID values using the Ziegler-Nichols method. You can find these by manually testing different `Kp` values (with `Ki` and `Kd` at zero) until the motors oscillate, or you can just provide a starting guess.
+2.  **Interactive Loop**: You will enter a menu with the following options:
+    - `[t] Test current PID values`: This is the main step. The tool will apply the PID values, which requires you to **manually reboot the motor controller**. After rebooting and pressing Enter, it runs a series of speed tests and gives you a performance score (lower is better).
+    - `[m] Manually enter new PID values`: Allows you to adjust Kp, Ki, and Kd to try and improve the score.
+    - `[s] Save best values and exit`: When you are satisfied with the performance, this option will apply the best-found PID values to the controller and exit.
+3.  **Results**: After exiting, the tool will have generated:
+    - A `.csv` file with raw data from the tests.
+    - A `.txt` report with performance analysis.
+    - A command to run `plots.py` to visualize the test data graphically.
+
 ## General Scripts
 
 ### Hardware Setup Scripts

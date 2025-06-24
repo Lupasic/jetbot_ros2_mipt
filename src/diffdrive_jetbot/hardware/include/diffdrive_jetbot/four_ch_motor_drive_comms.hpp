@@ -6,34 +6,38 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <limits> // For std::numeric_limits
+#include <memory> // For std::unique_ptr
 
 class FourChMotorDriveComms
 {
 public:
-  FourChMotorDriveComms() = default;
+  FourChMotorDriveComms() : serial_conn_(std::make_unique<LibSerial::SerialPort>()) {}
 
   void connect(const std::string &serial_device, int32_t baud_rate, int32_t timeout_ms)
   {  
+    serial_device_ = serial_device;
+    baud_rate_ = baud_rate;
     timeout_ms_ = timeout_ms;
-    serial_conn_.Open(serial_device);
-    serial_conn_.SetBaudRate(convert_baud_rate(baud_rate));
+    serial_conn_->Open(serial_device);
+    serial_conn_->SetBaudRate(convert_baud_rate(baud_rate));
     
     // Clear any existing data and wait for connection to stabilize
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    serial_conn_.FlushIOBuffers();
+    serial_conn_->FlushIOBuffers();
   }
 
   void disconnect()
   {
-    if (serial_conn_.IsOpen())
+    if (serial_conn_->IsOpen())
     {
-      serial_conn_.Close();
+      serial_conn_->Close();
     }
   }
 
   bool connected() const
   {
-    return serial_conn_.IsOpen();
+    return serial_conn_->IsOpen();
   }
 
   void read_encoder_data(double &val_1, double &val_2, int data_type)
@@ -45,7 +49,7 @@ public:
     }
 
     // Clear buffers before sending command
-    serial_conn_.FlushIOBuffers();
+    serial_conn_->FlushIOBuffers();
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
     std::string send_text = get_encoder_command(data_type);
@@ -64,7 +68,7 @@ public:
   {
     std::stringstream ss;
     ss << "$spd:" << val_1 << "," << -val_2 << ",0,0#\r";
-    serial_conn_.Write(ss.str());
+    serial_conn_->Write(ss.str());
     // send_command_and_wait(ss.str());
   }
 
@@ -73,7 +77,7 @@ public:
     std::stringstream ss;
     ss << "$pwm:" << val_1 << "," << -val_2 << ",0,0#\r";
     // send_command_and_wait(ss.str());
-    serial_conn_.Write(ss.str());
+    serial_conn_->Write(ss.str());
   }
 
   void set_pwm_pid_values(float k_p, float k_d, float k_i)
@@ -81,6 +85,9 @@ public:
     std::stringstream ss;
     ss << "$MPID:" << k_p << "," << k_i << "," << k_d << "#\r";
     send_command_and_wait(ss.str());
+    std::string response = read_acknowledgment();
+    std::cout << response << std::endl;
+    handle_reboot_and_reconnect("PID values");
   }
 
   void set_motor_type(int motor_type)
@@ -152,7 +159,7 @@ public:
 
   void read_flash_settings()
   {
-    serial_conn_.FlushIOBuffers();
+    serial_conn_->FlushIOBuffers();
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     
     send_command_and_wait("$read_flash#");
@@ -181,10 +188,10 @@ public:
         break;
       }
       
-      if (serial_conn_.IsDataAvailable())
+      if (serial_conn_->IsDataAvailable())
       {
         char byte;
-        serial_conn_.ReadByte(byte, 1); // Very short timeout for individual byte
+        serial_conn_->ReadByte(byte, 1); // Very short timeout for individual byte
         all_data += byte;
       }
       else
@@ -219,8 +226,53 @@ public:
   }
 
 private:
-  LibSerial::SerialPort serial_conn_;
+  std::unique_ptr<LibSerial::SerialPort> serial_conn_;
   int timeout_ms_ = 50;
+  std::string serial_device_;
+  int32_t baud_rate_;
+
+  void handle_reboot_and_reconnect(const std::string& reason)
+  {
+    std::cout << "Configuration updated (" << reason << "). The board needs to be rebooted." << std::endl;
+    disconnect();
+
+    std::cout << "\nPlease manually reboot the motor controller (unplug and plug it back in)." << std::endl;
+    std::cout << "Press ENTER when you are ready to reconnect..." << std::flush;
+    
+    // Clear the input buffer and wait for the user to press Enter.
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    std::cout << "Attempting to reconnect..." << std::endl;
+
+    bool reconnected = false;
+    for (int i = 0; i < 10; ++i)
+    {
+      try
+      {
+        // Re-create the serial port object to ensure a clean state.
+        serial_conn_ = std::make_unique<LibSerial::SerialPort>();
+        connect(serial_device_, baud_rate_, timeout_ms_);
+        if (connected())
+        {
+          std::cout << "Successfully reconnected." << std::endl;
+          reconnected = true;
+          read_flash_settings();
+          break;
+        }
+      }
+      catch(const std::exception& e)
+      {
+        std::cerr << "Reconnect attempt " << i + 1 << " failed. Retrying in 1 second..." << std::endl;
+        disconnect(); // Ensure port is closed before next attempt
+      }
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+
+    if (!reconnected)
+    {
+      throw std::runtime_error("Failed to reconnect to motor driver after " + reason);
+    }
+  }
 
   LibSerial::BaudRate convert_baud_rate(int baud_rate) const
   {
@@ -246,10 +298,10 @@ private:
     }
     
     // Ensure clean state before sending
-    serial_conn_.FlushIOBuffers();
+    serial_conn_->FlushIOBuffers();
     
     // Send command
-    serial_conn_.Write(command);
+    serial_conn_->Write(command);
     
     // Small delay to ensure command is sent
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
