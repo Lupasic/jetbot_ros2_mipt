@@ -70,9 +70,9 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
-        # twist_stamped_to_twist,
-        joy_node,
-        teleop_twist_joy_node,
+        twist_stamped_to_twist,
+        # joy_node,
+        # teleop_twist_joy_node,
         twist_mux,
         lidar_launch,
         diffbot_launch,
