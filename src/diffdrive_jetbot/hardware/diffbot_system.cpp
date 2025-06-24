@@ -54,10 +54,7 @@ hardware_interface::CallbackReturn DiffDriveJetbotHardware::on_init(
   RCLCPP_INFO(rclcpp::get_logger("DiffDriveJetbotHardware"), 
               "Calculated enc_counts_per_rev: %d (mline: %d, mphase: %d)", 
               cfg_.enc_counts_per_rev, cfg_.mline, cfg_.mphase);
-  
-  cfg_.pid_p = std::stod(info_.hardware_parameters["pid_p"]);
-  cfg_.pid_d = std::stod(info_.hardware_parameters["pid_d"]);
-  cfg_.pid_i = std::stod(info_.hardware_parameters["pid_i"]);
+
   
   cfg_.max_motor_rpm = std::stod(info_.hardware_parameters["max_motor_rpm"]);
   
@@ -165,7 +162,7 @@ hardware_interface::CallbackReturn DiffDriveJetbotHardware::on_configure(
   comms_.connect(cfg_.device, cfg_.baud_rate, cfg_.timeout_ms);
   
   // Setup all motor parameters
-  comms_.setup_motor_parameters(cfg_.mtype, cfg_.deadzone, cfg_.mline, cfg_.mphase, cfg_.wdiameter, cfg_.pid_p, cfg_.pid_i, cfg_.pid_d);
+  comms_.setup_motor_parameters(cfg_.mtype, cfg_.deadzone, cfg_.mline, cfg_.mphase, cfg_.wdiameter);
   comms_.read_flash_settings();
   
   RCLCPP_INFO(rclcpp::get_logger("DiffDriveJetbotHardware"), "Successfully configured!");

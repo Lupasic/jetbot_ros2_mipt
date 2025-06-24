@@ -135,26 +135,13 @@ public:
     std::cout << response << std::endl;
   }
 
-  void set_encoder_reset()
+  void setup_motor_parameters(int mtype, int deadzone, int mline, int mphase, int wdiameter)
   {
-    std::stringstream ss;
-    ss << "$flash_reset" << "#\r";
-    send_command_and_wait(ss.str());
-    std::string response = read_acknowledgment();
-    std::cout << response << std::endl;
-  }
-
-  void setup_motor_parameters(int mtype, int deadzone, int mline, int mphase, int wdiameter, float pid_p, float pid_i, float pid_d)
-  {
-    // set_encoder_reset();
-    // std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-    // std::cout << "Reset cmu" << std::endl;
     set_motor_type(mtype);
     set_motor_deadzone(deadzone);
     set_motor_mline(mline);
     set_motor_mphase(mphase);
     set_wheel_diam(wdiameter);
-    set_pwm_pid_values(pid_p, pid_d, pid_i);
   }
 
   void read_flash_settings()

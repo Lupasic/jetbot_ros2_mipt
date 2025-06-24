@@ -10,7 +10,7 @@
         <param name="right_wheel_name">right_wheel_continuous_joint</param>
         <param name="device">/dev/ttyMOTOR</param>
         <param name="baud_rate">115200</param>
-        <param name="timeout_ms">10</param>
+        <param name="timeout_ms">20</param>
 
         <param name="mtype">1</param>
         <param name="deadzone">1600</param>
@@ -18,10 +18,6 @@
         <param name="mphase">40</param>
         <param name="wdiameter">67</param>
         <param name="max_motor_rpm">300</param>
-
-        <param name="pid_p">0.8</param>
-        <param name="pid_i">0.06</param>
-        <param name="pid_d">0.5</param>
 
       </hardware>
       <joint name="${prefix}left_wheel_continuous_joint">

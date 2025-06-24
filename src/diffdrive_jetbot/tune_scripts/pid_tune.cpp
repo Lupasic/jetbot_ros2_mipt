@@ -8,6 +8,8 @@
 #include <sstream>
 #include <thread>
 #include <unistd.h>
+#include <map>
+#include <numeric>
 #include "four_ch_motor_drive_comms.hpp"
 
 struct PIDParams {
@@ -26,6 +28,7 @@ struct PIDParams {
 
 struct DataPoint {
     double timestamp;
+    int test_id;
     int target_speed_left, target_speed_right;
     double actual_speed_left, actual_speed_right;
     double position_left, position_right;
@@ -45,132 +48,145 @@ struct TestResult {
     void calculateMetrics() {
         if (data.empty()) return;
         
-        // Calculate metrics from data
-        calculateSettlingTime();
-        calculateOvershoot();
-        calculateSteadyStateError();
-        calculateRiseTime();
-        calculateSynchronizationError();
+        // Group data by test_id to match python script logic
+        std::map<int, std::vector<DataPoint>> grouped_data;
+        for (const auto& point : data) {
+            grouped_data[point.test_id].push_back(point);
+        }
+
+        std::vector<double> settling_times_l, settling_times_r;
+        std::vector<double> overshoots_l, overshoots_r;
+        std::vector<double> sses_l, sses_r;
+        std::vector<double> rise_times_l, rise_times_r;
+        std::vector<double> sync_errors;
+
+        for (auto const& pair : grouped_data) {
+            const std::vector<DataPoint>& group = pair.second;
+            if (group.empty()) continue;
+            settling_times_l.push_back(calculateSingleSettlingTime(group, true));
+            settling_times_r.push_back(calculateSingleSettlingTime(group, false));
+            overshoots_l.push_back(calculateSingleOvershoot(group, true));
+            overshoots_r.push_back(calculateSingleOvershoot(group, false));
+            sses_l.push_back(calculateSingleSteadyStateError(group, true));
+            sses_r.push_back(calculateSingleSteadyStateError(group, false));
+            rise_times_l.push_back(calculateSingleRiseTime(group, true));
+            rise_times_r.push_back(calculateSingleRiseTime(group, false));
+            sync_errors.push_back(calculateSingleSynchronizationError(group));
+        }
+
+        auto avg = [](const std::vector<double>& v) {
+            if (v.empty()) return 0.0;
+            return std::accumulate(v.begin(), v.end(), 0.0) / v.size();
+        };
+
+        settling_time_left = avg(settling_times_l);
+        settling_time_right = avg(settling_times_r);
+        overshoot_left = avg(overshoots_l);
+        overshoot_right = avg(overshoots_r);
+        steady_state_error_left = avg(sses_l);
+        steady_state_error_right = avg(sses_r);
+        rise_time_left = avg(rise_times_l);
+        rise_time_right = avg(rise_times_r);
+        synchronization_error = avg(sync_errors);
+        
         calculateOverallScore();
     }
     
 private:
-    void calculateSettlingTime() {
-        // Find settling time (time to stay within 5% of final value)
-        if (data.size() < 10) return;
+    double calculateSingleSettlingTime(const std::vector<DataPoint>& group, bool is_left) const {
+        if (group.size() < 2) return group.empty() ? 0.0 : group.back().timestamp;
         
-        double final_speed_left = data.back().actual_speed_left;
-        double final_speed_right = data.back().actual_speed_right;
-        double tolerance = 0.05; // 5%
+        double final_speed = is_left ? group.back().actual_speed_left : group.back().actual_speed_right;
+        if (std::abs(final_speed) < 1e-3) return group.back().timestamp;
+
+        double tolerance = 0.05 * std::abs(final_speed);
         
-        settling_time_left = settling_time_right = data.back().timestamp;
-        
-        for (int i = data.size() - 1; i >= 0; --i) {
-            if (std::abs(data[i].actual_speed_left - final_speed_left) > tolerance * std::abs(final_speed_left)) {
-                settling_time_left = data[i].timestamp;
-                break;
+        double settling_time = group.front().timestamp;
+        for (const auto& point : group) {
+            double current_speed = is_left ? point.actual_speed_left : point.actual_speed_right;
+            if (std::abs(current_speed - final_speed) > tolerance) {
+                settling_time = point.timestamp;
             }
         }
-        
-        for (int i = data.size() - 1; i >= 0; --i) {
-            if (std::abs(data[i].actual_speed_right - final_speed_right) > tolerance * std::abs(final_speed_right)) {
-                settling_time_right = data[i].timestamp;
-                break;
-            }
-        }
+        return settling_time;
     }
     
-    void calculateOvershoot() {
-        if (data.empty()) return;
+    double calculateSingleOvershoot(const std::vector<DataPoint>& group, bool is_left) const {
+        if (group.empty()) return 0.0;
         
-        double target_left = data.back().target_speed_left;
-        double target_right = data.back().target_speed_right;
-        
-        double max_left = 0, max_right = 0;
-        for (const auto& point : data) {
-            max_left = std::max(max_left, std::abs(point.actual_speed_left));
-            max_right = std::max(max_right, std::abs(point.actual_speed_right));
+        double target = is_left ? group.back().target_speed_left : group.back().target_speed_right;
+        if (std::abs(target) < 1e-3) return 0.0;
+
+        double max_speed = 0.0;
+        for (const auto& point : group) {
+            max_speed = std::max(max_speed, std::abs(is_left ? point.actual_speed_left : point.actual_speed_right));
         }
         
-        overshoot_left = (std::abs(target_left) > 0) ? 
-            std::max(0.0, (max_left - std::abs(target_left)) / std::abs(target_left)) : 0.0;
-        overshoot_right = (std::abs(target_right) > 0) ? 
-            std::max(0.0, (max_right - std::abs(target_right)) / std::abs(target_right)) : 0.0;
+        return std::max(0.0, (max_speed - std::abs(target)) / std::abs(target));
     }
     
-    void calculateSteadyStateError() {
-        if (data.size() < 10) return;
-        
-        // Average last 10% of data points for steady state
-        int start_idx = std::max(0, (int)data.size() - (int)data.size()/10);
-        double sum_error_left = 0, sum_error_right = 0;
-        int count = 0;
-        
-        for (int i = start_idx; i < data.size(); ++i) {
-            sum_error_left += std::abs(data[i].error_left);
-            sum_error_right += std::abs(data[i].error_right);
-            count++;
+    double calculateSingleSteadyStateError(const std::vector<DataPoint>& group, bool is_left) const {
+        if (group.empty()) return 0.0;
+
+        size_t num_samples = std::max(1, (int)(group.size() * 0.1));
+        size_t start_idx = group.size() - num_samples;
+
+        double sum_error = 0.0;
+        for (size_t i = start_idx; i < group.size(); ++i) {
+            sum_error += std::abs(is_left ? group[i].error_left : group[i].error_right);
         }
         
-        steady_state_error_left = (count > 0) ? sum_error_left / count : 0.0;
-        steady_state_error_right = (count > 0) ? sum_error_right / count : 0.0;
+        return sum_error / num_samples;
     }
     
-    void calculateRiseTime() {
-        if (data.empty()) return;
+    double calculateSingleRiseTime(const std::vector<DataPoint>& group, bool is_left) const {
+        if (group.empty()) return 0.0;
         
-        double target_left = std::abs(data.back().target_speed_left);
-        double target_right = std::abs(data.back().target_speed_right);
+        double target = std::abs(is_left ? group.back().target_speed_left : group.back().target_speed_right);
+        if (std::abs(target) < 1e-3) return 0.0;
+
+        double t10 = -1.0, t90 = -1.0;
         
-        rise_time_left = rise_time_right = 0.0;
-        
-        // Find 10% and 90% points
-        for (const auto& point : data) {
-            if (std::abs(point.actual_speed_left) >= 0.1 * target_left && rise_time_left == 0.0) {
-                rise_time_left = point.timestamp;
+        for (const auto& point : group) {
+            double current_speed = std::abs(is_left ? point.actual_speed_left : point.actual_speed_right);
+            if (t10 < 0 && current_speed >= 0.1 * target) {
+                t10 = point.timestamp;
             }
-            if (std::abs(point.actual_speed_right) >= 0.1 * target_right && rise_time_right == 0.0) {
-                rise_time_right = point.timestamp;
-            }
-        }
-        
-        for (const auto& point : data) {
-            if (std::abs(point.actual_speed_left) >= 0.9 * target_left) {
-                rise_time_left = point.timestamp - rise_time_left;
-                break;
+            if (t90 < 0 && current_speed >= 0.9 * target) {
+                t90 = point.timestamp;
+                break; 
             }
         }
         
-        for (const auto& point : data) {
-            if (std::abs(point.actual_speed_right) >= 0.9 * target_right) {
-                rise_time_right = point.timestamp - rise_time_right;
-                break;
-            }
+        if (t10 >= 0 && t90 >= 0) {
+            return t90 - t10;
         }
+        
+        return group.back().timestamp; // Penalize if it doesn't reach
     }
     
-    void calculateSynchronizationError() {
-        if (data.empty()) return;
+    double calculateSingleSynchronizationError(const std::vector<DataPoint>& group) const {
+        if (group.empty()) return 0.0;
         
         double sum_sync_error = 0.0;
-        for (const auto& point : data) {
+        for (const auto& point : group) {
             sum_sync_error += std::abs(point.actual_speed_left - point.actual_speed_right);
         }
-        synchronization_error = sum_sync_error / data.size();
+        return sum_sync_error / group.size();
     }
     
     void calculateOverallScore() {
-        // Weighted scoring system (lower is better)
+        // Weighted scoring system (lower is better) - matched with plots.py
         double score = 0.0;
         
         // Settling time (weight: 0.25)
         score += 0.25 * (settling_time_left + settling_time_right) / 2.0;
         
         // Overshoot (weight: 0.20)
-        score += 0.20 * (overshoot_left + overshoot_right) * 100.0;
+        score += 0.20 * (overshoot_left + overshoot_right) / 2.0 * 100.0;
         
         // Steady state error (weight: 0.30)
-        score += 0.30 * (steady_state_error_left + steady_state_error_right);
+        score += 0.30 * (steady_state_error_left + steady_state_error_right) / 2.0;
         
         // Rise time (weight: 0.15)
         score += 0.15 * (rise_time_left + rise_time_right) / 2.0;
@@ -187,7 +203,7 @@ public:
     PIDTuner(FourChMotorDriveComms& comm) : motor_comm_(comm) {
         // Default test parameters
         test_speeds_ = {100, 200, 300, 500}; // Motor speed values
-        test_duration_ = 8.0; // seconds
+        test_duration_ = 2.0; // seconds
         sample_rate_hz_ = 50.0; // 50 Hz sampling
         safety_timeout_ = 15.0; // Safety timeout in seconds
     }
@@ -229,6 +245,9 @@ public:
             std::cout << "\nChoose an action:" << std::endl;
             std::cout << " [t] Test current PID values" << std::endl;
             std::cout << " [m] Manually enter new PID values" << std::endl;
+            if (best_result.overall_score != std::numeric_limits<double>::max()) {
+                std::cout << " [a] Automatic search around best values" << std::endl;
+            }
             std::cout << " [s] Save best values and exit" << std::endl;
             std::cout << "> ";
             std::cin >> choice;
@@ -256,6 +275,19 @@ public:
                     std::cin >> current_params.kd;
                     // Clear input buffer
                     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                    break;
+                }
+                case 'a': {
+                    if (best_result.overall_score != std::numeric_limits<double>::max()) {
+                        TestResult auto_best = runAutoTuning(best_result.params);
+                        if (auto_best.overall_score < best_result.overall_score) {
+                            best_result = auto_best;
+                            std::cout << "Auto-tuning found a new overall best score!" << std::endl;
+                        }
+                        current_params = best_result.params; // Update current to the best overall
+                    } else {
+                        std::cout << "Please run at least one manual test [t] before starting automatic search." << std::endl;
+                    }
                     break;
                 }
                 case 's':
@@ -331,6 +363,66 @@ private:
     std::vector<TestResult> all_results_;
     std::string log_filename_;
     
+    TestResult runAutoTuning(const PIDParams& base_params) {
+        std::cout << "\n--- Automatic Tuning ---" << std::endl;
+        std::cout << "This will test several variations around the base parameters: " << base_params.toString() << std::endl;
+        std::cout << "Each test will require a manual reboot." << std::endl;
+
+        std::vector<PIDParams> candidates;
+        float p_range[] = {0.9f, 1.1f};
+        float i_range[] = {0.9f, 1.1f};
+        float d_range[] = {0.8f, 1.2f};
+
+        for (float p_mult : p_range) {
+            for (float i_mult : i_range) {
+                for (float d_mult : d_range) {
+                    candidates.emplace_back(
+                        base_params.kp * p_mult,
+                        base_params.ki * i_mult,
+                        base_params.kd * d_mult
+                    );
+                }
+            }
+        }
+
+        std::cout << "Will test " << candidates.size() << " new parameter combinations." << std::endl;
+
+        TestResult best_auto_result;
+        best_auto_result.overall_score = std::numeric_limits<double>::max();
+
+        int test_count = 0;
+        for (const auto& params : candidates) {
+            std::cout << "\n--- Auto-Test " << ++test_count << "/" << candidates.size() << " ---" << std::endl;
+            
+            std::cout << "Press ENTER to test next combination, or type 'q' and ENTER to quit auto-tuning: ";
+            std::string line;
+            std::getline(std::cin, line);
+            if (line == "q" || line == "Q") {
+                std::cout << "Aborting auto-tuning." << std::endl;
+                break;
+            }
+
+            TestResult result = testPIDParams(params);
+            all_results_.push_back(result);
+
+            std::cout << "  -> Test complete. Score: " << std::fixed << std::setprecision(3) << result.overall_score << std::endl;
+            if (result.overall_score < best_auto_result.overall_score) {
+                best_auto_result = result;
+                std::cout << "  -> This is the new best score in this auto-run!" << std::endl;
+            }
+        }
+        
+        std::cout << "\n--- Automatic Tuning Complete ---" << std::endl;
+        if (best_auto_result.overall_score != std::numeric_limits<double>::max()) {
+            std::cout << "Best parameters found in this run: " << best_auto_result.params.toString() 
+                      << " (Score: " << best_auto_result.overall_score << ")" << std::endl;
+        } else {
+            std::cout << "No successful tests in auto-run." << std::endl;
+        }
+
+        return best_auto_result;
+    }
+
     bool performSafetyCheck() {
         try {
             // Test basic communication
@@ -418,6 +510,7 @@ private:
             
             DataPoint point;
             point.timestamp = elapsed;
+            point.test_id = test_id;
             point.target_speed_left = target_speed;
             point.target_speed_right = target_speed;
             
@@ -530,6 +623,19 @@ private:
         report << "PID TUNING REPORT\n";
         report << "================\n\n";
         report << "Optimal Parameters: " << result.params.toString() << "\n\n";
+        
+        report << "Performance Metrics:\n";
+        report << "  Settling Time:    L=" << std::fixed << std::setprecision(3) 
+                  << result.settling_time_left << "s, R=" << result.settling_time_right << "s\n";
+        report << "  Overshoot:        L=" << std::setprecision(1) 
+                  << result.overshoot_left*100 << "%, R=" << result.overshoot_right*100 << "%\n";
+        report << "  Steady State Err: L=" << std::setprecision(3) 
+                  << result.steady_state_error_left << ", R=" << result.steady_state_error_right << "\n";
+        report << "  Rise Time:        L=" << result.rise_time_left 
+                  << "s, R=" << result.rise_time_right << "s\n";
+        report << "  Sync Error:       " << result.synchronization_error << "\n";
+        report << "  Overall Score:    " << result.overall_score << " (lower is better)\n\n";
+        
         report << "Performance Analysis:\n";
         report << "- System demonstrates ";
         if (result.overshoot_left < 0.1 && result.overshoot_right < 0.1) {

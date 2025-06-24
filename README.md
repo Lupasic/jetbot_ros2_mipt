@@ -201,6 +201,8 @@ ros2 launch jetbot_bringup localization.launch.py
 ### PID Controller Tuning
 This project includes a standalone interactive tool for tuning the motor PID controllers. This is crucial for achieving stable and responsive robot movement.
 
+**Important**: The PID parameters are stored directly in the motor controller's flash memory. They are **not** configured through ROS parameters or URDF files. The `pid_tune` utility is the only supported method for setting these values.
+
 **1. Build the Tuning Tool**
 
 The tool is not part of the main `colcon` build. You need to compile it manually inside the container.
@@ -209,11 +211,11 @@ The tool is not part of the main `colcon` build. You need to compile it manually
 # Enter the container
 docker exec -it --privileged jetbot_ros2_mipt-jetbot-1 bash
 
-# Navigate to the hardware source directory
-cd ~/ros2_ws/src/diffdrive_jetbot/hardware
+# Navigate to the tuning scripts directory
+cd ~/ros2_ws/src/diffdrive_jetbot/tune_scripts
 
 # Compile the tool
-g++ -I./include/diffdrive_jetbot -o pid_tune pid_tune.cpp -lserial -lpthread
+g++ -I../hardware/include/diffdrive_jetbot -o pid_tune pid_tune.cpp -lserial -lpthread
 ```
 
 **2. Run the Tuning Tool**
@@ -327,10 +329,11 @@ Adds JetBot-specific packages:
 ## Configuration
 
 ### Motor Parameters
-Configure in URDF/launch files:
-- `mtype`, `mline`, `mphase`: Motor encoder settings
-- `pid_p`, `pid_i`, `pid_d`: PID control parameters
-- `max_motor_rpm`: Maximum motor speed
+Configure in `diffdrive_jetbot/description/ros2_control/diffbot.ros2_control.xacro`:
+- `mtype`, `mline`, `mphase`: Motor encoder settings.
+- `deadzone`: Motor deadzone value.
+- `wdiameter`: Wheel diameter in millimeters.
+- `max_motor_rpm`: Maximum motor speed for scaling velocity commands.
 
 ### Navigation Tuning
 Edit `config/nav2_default_params.yaml` for:

@@ -47,9 +47,6 @@ struct Config
   int baud_rate = 0;
   int timeout_ms = 0;
   int enc_counts_per_rev = 0;
-  double pid_p = 0.0;
-  double pid_d = 0.0;
-  double pid_i = 0.0;
   int mtype = 0;
   int deadzone = 0;
   int mline = 0;
