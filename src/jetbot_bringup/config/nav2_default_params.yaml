@@ -102,35 +102,31 @@ local_costmap:
       height: 1
       resolution: 0.01
       robot_radius: 0.085
-      # plugins: ["voxel_layer", "inflation_layer", "static_layer"]
-      # inflation_layer:
-      #   plugin: "nav2_costmap_2d::InflationLayer"
-      #   cost_scaling_factor: 8.0
-      #   inflation_radius: 0.1
-      # voxel_layer:
-      #   plugin: "nav2_costmap_2d::VoxelLayer"
-      #   enabled: True
-      #   publish_voxel_map: True
-      #   origin_z: 0.0
-      #   z_resolution: 0.02
-      #   z_voxels: 16
-      #   max_obstacle_height: 2.0
-      #   mark_threshold: 0
-      #   observation_sources: scan
-      #   scan:
-      #     topic: /scan
-      #     max_obstacle_height: 2.0
-      #     clearing: True
-      #     marking: True
-      #     data_type: "LaserScan"
-      #     raytrace_max_range: 6.0
-      #     raytrace_min_range: 0.15
-      #     obstacle_max_range: 4.0
-      #     obstacle_min_range: 0.15
-      # static_layer:
-      #   plugin: "nav2_costmap_2d::StaticLayer"
-      #   map_subscribe_transient_local: True
-      # always_send_full_costmap: True
+      plugins: ["voxel_layer", "inflation_layer"]
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 4.0
+        inflation_radius: 0.06
+      voxel_layer:
+        plugin: "nav2_costmap_2d::VoxelLayer"
+        enabled: True
+        publish_voxel_map: True
+        origin_z: 0.0
+        z_resolution: 0.02
+        z_voxels: 16
+        max_obstacle_height: 2.0
+        mark_threshold: 0
+        observation_sources: scan
+        scan:
+          topic: /scan
+          max_obstacle_height: 2.0
+          clearing: True
+          marking: True
+          data_type: "LaserScan"
+          raytrace_max_range: 6.0
+          raytrace_min_range: 0.15
+          obstacle_max_range: 4.0
+          obstacle_min_range: 0.15
 
 global_costmap:
   global_costmap:
@@ -163,8 +159,8 @@ global_costmap:
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 5.0
-        inflation_radius: 0.2
+        cost_scaling_factor: 4.0
+        inflation_radius: 0.06
       always_send_full_costmap: True
 
 # https://docs.nav2.org/configuration/packages/configuring-lifecycle.html
@@ -181,7 +177,7 @@ lifecycle_manager:
 # https://docs.nav2.org/plugins/index.html#planners
 planner_server:
   ros__parameters:
-    expected_planner_frequency: 20.0
+    expected_planner_frequency: 1.0
     costmap_update_timeout: 1.0
     service_introspection_mode: "disabled"
     planner_plugins: ['GridBased']
@@ -196,13 +192,13 @@ planner_server:
 controller_server:
   ros__parameters:
     use_sim_time: False
-    controller_frequency: 20.0
+    controller_frequency: 10.0
     costmap_update_timeout: 0.3
     publish_zero_velocity: True
-    min_x_velocity_threshold: 0.001
+    min_x_velocity_threshold: 0.01
     min_y_velocity_threshold: 0.5
-    min_theta_velocity_threshold: 0.001
-    failure_tolerance: 0.3
+    min_theta_velocity_threshold: 0.01
+    failure_tolerance: 0.1
     enable_stamped_cmd_vel: False
     odom_topic: /diffbot_base_controller/odom
     progress_checker_plugins: ["progress_checker"] # progress_checker_plugin: "progress_checker" For Humble and older
@@ -210,23 +206,23 @@ controller_server:
     controller_plugins: ["FollowPath"]
     progress_checker:
       plugin: "nav2_controller::PoseProgressChecker"
-      required_movement_radius: 0.01
+      required_movement_radius: 0.001
       required_movement_angle: 0.01
-      movement_time_allowance: 10.0
+      movement_time_allowance: 100.0
     goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
       xy_goal_tolerance: 0.01
-      yaw_goal_tolerance: 0.01
-      stateful: True
+      yaw_goal_tolerance: 0.1
+      stateful: False
     FollowPath:
       plugin: "nav2_rotation_shim_controller::RotationShimController"
       primary_controller: "dwb_core::DWBLocalPlanner"
-      angular_dist_threshold: 0.785
-      forward_sampling_distance: 0.5
-      rotate_to_heading_angular_vel: 1.8
-      max_angular_accel: 3.2
-      simulate_ahead_time: 1.0
-      rotate_to_goal_heading: false
+      angular_dist_threshold: 0.1
+      forward_sampling_distance: 0.01
+      rotate_to_heading_angular_vel: 0.5
+      max_angular_accel: 1.0
+      simulate_ahead_time: 2.0
+      rotate_to_goal_heading: True
       use_path_orientations: false
 
       debug_trajectory_details: True
@@ -234,25 +230,25 @@ controller_server:
       min_vel_y: 0.0
       max_vel_x: 0.1
       max_vel_y: 0.0
-      max_vel_theta: 1.0
+      max_vel_theta: 0.05
       min_speed_xy: 0.0
-      max_speed_xy: 0.2
+      max_speed_xy: 0.1
       min_speed_theta: 0.0
-      acc_lim_x: 0.2
+      acc_lim_x: 0.05
       acc_lim_y: 0.0
-      acc_lim_theta: 1.0
-      decel_lim_x: -0.2
+      acc_lim_theta: 0.5
+      decel_lim_x: -0.1
       decel_lim_y: 0.0
-      decel_lim_theta: -1.0
+      decel_lim_theta: -0.5
       vx_samples: 20
       vy_samples: 10
       vtheta_samples: 20
-      sim_time: 1.7
+      sim_time: 1.0
       linear_granularity: 0.05
       angular_granularity: 0.025
-      transform_tolerance: 0.2
-      xy_goal_tolerance: 0.25
-      trans_stopped_velocity: 0.25
+      transform_tolerance: 0.1
+      xy_goal_tolerance: 0.1
+      trans_stopped_velocity: 0.01
       short_circuit_trajectory_evaluation: True
       limit_vel_cmd_in_traj: False
       stateful: True
@@ -274,15 +270,15 @@ controller_server:
 amcl:
   ros__parameters:
     use_sim_time: false
-    alpha1: 0.1  # Reduced for small, light robot
-    alpha2: 0.1
-    alpha3: 0.1
-    alpha4: 0.1
-    alpha5: 0.1
+    alpha1: 0.2  # Reduced for small, light robot
+    alpha2: 0.2
+    alpha3: 0.2
+    alpha4: 0.2
+    alpha5: 0.2
     base_frame_id: "base_footprint"
-    beam_skip_distance: 0.5
-    beam_skip_error_threshold: 0.9
-    beam_skip_threshold: 0.3
+    beam_skip_distance: 0.02
+    beam_skip_error_threshold: 0.02
+    beam_skip_threshold: 0.02
     do_beamskip: false
     global_frame_id: "map"
     lambda_short: 0.1
@@ -290,8 +286,8 @@ amcl:
     laser_max_range: -1.0
     laser_min_range: -1.0
     laser_model_type: "likelihood_field"
-    max_beams: 60
-    max_particles: 2000  # Reduced for Jetson Nano
+    max_beams: 120
+    max_particles: 3000  # Reduced for Jetson Nano
     min_particles: 200
     odom_frame_id: "odom"
     pf_err: 0.01
@@ -335,7 +331,7 @@ behavior_server:
     transform_timeout: 0.1
     simulate_ahead_time: 2.0
     max_rotational_vel: 0.5
-    min_rotational_vel: 0.1
+    min_rotational_vel: 0.01
     rotational_acc_lim: 0.5
     enable_stamped_cmd_vel: false  # default false in Jazzy or older
 
@@ -371,11 +367,26 @@ velocity_smoother:
     smoothing_frequency: 50.0
     scale_velocities: False
     feedback: "OPEN_LOOP"
-    max_velocity: [0.2, 0.0, 0.8]
-    min_velocity: [-0.2, 0.0, -0.8]
-    max_accel: [0.3, 0.0, 0.8]
-    max_decel: [-0.3, 0.0, -0.8]
+    max_velocity: [0.1, 0.0, 0.5]
+    min_velocity: [-0.1, 0.0, -0.5]
+    max_accel: [0.05, 0.0, 0.5]
+    max_decel: [-0.05, 0.0, -0.5]
     odom_topic: "/diffbot_base_controller/odom"
     odom_duration: 0.02
     deadband_velocity: [0.0, 0.0, 0.0]
     velocity_timeout: 1.0
+
+# https://docs.nav2.org/configuration/packages/configuring-map-server.html#map-server-saver
+map_server:
+  ros__parameters:
+    yaml_filename: ""
+    topic_name: "map"
+    frame_id: "map"
+    service_introspection_mode: "disabled"
+
+map_saver:
+  ros__parameters:
+    save_map_timeout: 5.0
+    free_thresh_default: 0.25
+    occupied_thresh_default: 0.65
+    service_introspection_mode: "disabled"
