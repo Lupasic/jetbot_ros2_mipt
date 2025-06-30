@@ -238,10 +238,10 @@ hardware_interface::return_type DiffDriveJetbotHardware::read(
 {
   // auto start_time = std::chrono::steady_clock::now();
 
-  if (!comms_.connected())
-  {
-    return hardware_interface::return_type::ERROR;
-  }
+  // if (!comms_.connected())
+  // {
+  //   return hardware_interface::return_type::ERROR;
+  // }
 
   // Read current encoder counts
   double current_left_enc, current_right_enc;
@@ -300,15 +300,16 @@ hardware_interface::return_type diffdrive_jetbot ::DiffDriveJetbotHardware::writ
 
   // auto start_time = std::chrono::steady_clock::now();
 
-  if (!comms_.connected())
-  {
-    return hardware_interface::return_type::ERROR;
-  }
+  // if (!comms_.connected())
+  // {
+  //   return hardware_interface::return_type::ERROR;
+  // }
 
   int motor_l_ticks = wheel_l_.cmd * 1000.0 / cfg_.max_motor_rads;
   int motor_r_ticks = wheel_r_.cmd * 1000.0 / cfg_.max_motor_rads;
   comms_.set_motor_speed_values(motor_l_ticks, motor_r_ticks);
 
+  RCLCPP_INFO(rclcpp::get_logger("DiffDriveJetbotHardware"), "Writing commands. Left: %d, Right: %d", motor_l_ticks, motor_r_ticks);
   // auto end_time = std::chrono::steady_clock::now();
   // auto duration_ms = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
   

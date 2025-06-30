@@ -36,6 +36,7 @@ int main()
     sleep(3);
     motor_comm.set_motor_speed_values(00,00);
     sleep(3);
+    std::cout <<"send speed 100, -100" << std::endl;
     motor_comm.set_motor_speed_values(100,-100);
     sleep(3);
     motor_comm.read_encoder_data(left_ticks, right_ticks,1);
