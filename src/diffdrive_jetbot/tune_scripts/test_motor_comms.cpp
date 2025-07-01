@@ -20,8 +20,8 @@ int main()
     double left_ticks = 0.0;
     double right_ticks = 0.0;
 
-    // motor_comm.set_motor_mphase(40);
-    // motor_comm.set_motor_mline(11);
+    motor_comm.set_motor_mphase(40);
+    motor_comm.set_motor_mline(11);
     motor_comm.read_flash_settings();
     motor_comm.read_encoder_data(left_ticks, right_ticks,1);
     int counts_per_rev = 1760;
@@ -40,10 +40,7 @@ int main()
     motor_comm.set_motor_speed_values(100,-100);
     sleep(3);
     motor_comm.read_encoder_data(left_ticks, right_ticks,1);
-    // std::cout << "Left angle 1: " << (2*M_PI)/counts_per_rev*(left_ticks-init_l_ticks) << ", Right angle: " << (2*M_PI)/counts_per_rev*(right_ticks-init_r_ticks) << std::endl;
-    std::cout << "Left angle 1: " << left_ticks-init_l_ticks << ", Right angle: " << (right_ticks-init_r_ticks) << std::endl;
-    motor_comm.read_encoder_data(left_ticks, right_ticks,2);
-    std::cout << "Left encoder/s: " << static_cast<int>(left_ticks) << ", Right encoder/s: " << static_cast<int>(right_ticks) << std::endl;
+    std::cout << "Left angle 1: " << (2*M_PI)/counts_per_rev*(left_ticks-init_l_ticks) << ", Right angle: " << (2*M_PI)/counts_per_rev*(right_ticks-init_r_ticks) << std::endl;
     motor_comm.read_encoder_data(left_ticks, right_ticks,3);
     std::cout << "Left spd: " << left_ticks << ", Right spd: " << right_ticks << std::endl;
     motor_comm.set_motor_speed_values(0,0);

@@ -15,6 +15,9 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(SERIAL REQUIRED IMPORTED_TARGET libserial)
+find_package(Threads REQUIRED)
 foreach(Dependency IN ITEMS ${THIS_PACKAGE_INCLUDE_DEPENDS})
   find_package(${Dependency} REQUIRED)
 endforeach()
@@ -36,7 +39,7 @@ ament_target_dependencies(
   ${THIS_PACKAGE_INCLUDE_DEPENDS}
 )
 
-target_link_libraries(diffdrive_jetbot PUBLIC serial)
+target_link_libraries(diffdrive_jetbot PUBLIC PkgConfig::SERIAL Threads::Threads)
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.

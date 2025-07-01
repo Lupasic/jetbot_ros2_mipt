@@ -1,6 +1,6 @@
 controller_manager:
   ros__parameters:
-    update_rate: 14  # Hz
+    update_rate: 80  # Hz
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
@@ -21,7 +21,7 @@ diffbot_base_controller:
     left_wheel_radius_multiplier: 1.0
     right_wheel_radius_multiplier: 1.0
 
-    publish_rate: 14.0
+    publish_rate: 80.0
     odom_frame_id: odom
     base_frame_id: base_footprint
     pose_covariance_diagonal : [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
@@ -51,7 +51,7 @@ diffbot_base_controller:
     angular.z.has_jerk_limits: false
     angular.z.max_velocity: 1.0
     angular.z.min_velocity: -1.0
-    angular.z.max_acceleration: 1.0
-    angular.z.min_acceleration: -1.0
+    angular.z.max_acceleration: 3.0
+    angular.z.min_acceleration: -3.0
     angular.z.max_jerk: 0.0
     angular.z.min_jerk: 0.0

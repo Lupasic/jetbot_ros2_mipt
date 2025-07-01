@@ -309,19 +309,7 @@ hardware_interface::return_type diffdrive_jetbot ::DiffDriveJetbotHardware::writ
   int motor_r_ticks = wheel_r_.cmd * 1000.0 / cfg_.max_motor_rads;
   comms_.set_motor_speed_values(motor_l_ticks, motor_r_ticks);
 
-  RCLCPP_INFO(rclcpp::get_logger("DiffDriveJetbotHardware"), "Writing commands. Left: %d, Right: %d", motor_l_ticks, motor_r_ticks);
-  // auto end_time = std::chrono::steady_clock::now();
-  // auto duration_ms = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
-  
-  // double frequency_hz = 0.0;
-  // if (duration_ms > 0) {
-  //   frequency_hz = 1000000.0 / static_cast<double>(duration_ms);
-  // }
-
-  // RCLCPP_DEBUG(
-  //   rclcpp::get_logger("DiffDriveJetbotHardware"),
-  //   "write() executed in %ld µs (~%.2f Hz)", duration_ms, frequency_hz
-  // );
+  // RCLCPP_INFO(rclcpp::get_logger("DiffDriveJetbotHardware"), "Writing commands. Left: %d, Right: %d", motor_l_ticks, motor_r_ticks);
 
   return hardware_interface::return_type::OK;
 }
