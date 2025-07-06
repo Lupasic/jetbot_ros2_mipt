@@ -2,7 +2,12 @@ services:
   jetbot:
     # image: jetbot_main_docker
     image: jetbot_full_ros2
-
+    # privileged: True
+    cap_add:
+     - SYS_NICE
+    ulimits:
+      rtprio: 99
+      memlock: -1
     runtime: nvidia
     restart: always
     network_mode: host

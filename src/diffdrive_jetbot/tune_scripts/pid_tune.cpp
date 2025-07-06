@@ -227,9 +227,9 @@ public:
         initializeLogging();
         
         // Step 1: Get initial parameters via user input
-        std::cout << "\n--- Step 1: Get initial parameters (Ziegler-Nichols) ---" << std::endl;
-        PIDParams current_params = zieglerNicholsTuning();
-        
+        // std::cout << "\n--- Step 1: Get initial parameters (Ziegler-Nichols) ---" << std::endl;
+        // PIDParams current_params = zieglerNicholsTuning();
+        PIDParams current_params = PIDParams(2.4,0.04,0.2);
         TestResult best_result;
         best_result.overall_score = std::numeric_limits<double>::max();
         
