@@ -19,6 +19,18 @@ from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, 
 
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
+import socket
+
+
+def get_local_ip():
+    """Get the local IP address"""
+    try:
+        # Connect to a remote address to determine local IP
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(("8.8.8.8", 80))
+            return s.getsockname()[0]
+    except Exception:
+        return "127.0.0.1"
 
 
 def generate_launch_description():
@@ -34,8 +46,7 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument(
             "robot_ip",
-            # default_value="192.168.50.34",
-            default_value="192.168.1.152",
+            default_value=get_local_ip(),
             description="IP address of the robot for HTTP mesh server",
         )
     )
@@ -66,7 +77,7 @@ def generate_launch_description():
             " ",
             "prefix:=robot_",
             robot_id,
-            "_",
+            "/",
             " ",
             "robot_ip:=",
             robot_ip,
@@ -109,23 +120,20 @@ def generate_launch_description():
         namespace=robot_namespace,
         output="both",
         parameters=[robot_description],
-        remappings=[
-            ("/diff_drive_controller/cmd_vel_unstamped", "/cmd_vel"),
-        ],
     )
 
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
         executable="spawner",
         namespace=robot_namespace,
-        arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
+arguments=["joint_state_broadcaster", "--controller-manager", [TextSubstitution(text="/robot_"), robot_id, TextSubstitution(text="/controller_manager")]],
     )
 
     robot_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
         namespace=robot_namespace,
-        arguments=["diffbot_base_controller", "--controller-manager", "/controller_manager"],
+        arguments=["diffbot_base_controller", "--controller-manager", [TextSubstitution(text="/robot_"), robot_id, TextSubstitution(text="/controller_manager")]],
     )
 
     # Delay start of robot_controller after `joint_state_broadcaster`

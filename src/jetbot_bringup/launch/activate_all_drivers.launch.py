@@ -20,14 +20,15 @@ def generate_launch_description():
     robot_id = LaunchConfiguration("robot_id")
     robot_namespace = [TextSubstitution(text="robot_"), robot_id]
 
+# Needed to activate robot steering app before activation
     twist_stamped_to_twist = Node(
         package='topic_tools',
         executable='relay_field',
         name='twist_stamped_to_twist',
-        namespace=robot_namespace,
+        # namespace=robot_namespace,
         arguments=[
-            'cmd_vel_robot_steering_stamped',
-            'cmd_vel_robot_steering',
+            'robot_1/cmd_vel_robot_steering_stamped',
+            'robot_1/cmd_vel_robot_steering',
             'geometry_msgs/msg/Twist',
             '{linear: m.twist.linear, angular: m.twist.angular}'
         ]
@@ -64,7 +65,8 @@ def generate_launch_description():
             parameters=[PathJoinSubstitution([
                 FindPackageShare("jetbot_bringup"), "config", "twist_mux.yaml"
             ])],
-            remappings=[('/cmd_vel_out', '/diffbot_base_controller/cmd_vel_unstamped')]
+            remappings=[('cmd_vel_out', 'diffbot_base_controller/cmd_vel_unstamped')],
+            # arguments=['--ros-args', '--log-level', 'debug']
         )
 
     # Lidar launch include with robot_id
@@ -92,7 +94,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription(declared_arguments + [
-        # twist_stamped_to_twist,
+        twist_stamped_to_twist,
         #joy_node,
         #teleop_twist_joy_node,
         twist_mux,
