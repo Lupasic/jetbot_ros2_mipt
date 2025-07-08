@@ -15,7 +15,7 @@
 from launch import LaunchDescription
 from launch.actions import RegisterEventHandler, DeclareLaunchArgument, ExecuteProcess
 from launch.event_handlers import OnProcessExit
-from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration
+from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration, TextSubstitution
 
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
@@ -51,7 +51,9 @@ def generate_launch_description():
     robot_id = LaunchConfiguration("robot_id")
     robot_ip = LaunchConfiguration("robot_ip")
     mesh_port = LaunchConfiguration("mesh_port")
-    robot_namespace = ['robot_', robot_id]
+    
+    # Correct namespace formation using TextSubstitution
+    robot_namespace = [TextSubstitution(text="robot_"), robot_id]
 
     # Get URDF via xacro with robot_id prefix
     robot_description_content = Command(
@@ -62,8 +64,9 @@ def generate_launch_description():
                 [FindPackageShare("diffdrive_jetbot"), "urdf", "diffbot.urdf.xacro"]
             ),
             " ",
-            "prefix:=",
-            ['robot_', robot_id, '_'],
+            "prefix:=robot_",
+            robot_id,
+            "_",
             " ",
             "robot_ip:=",
             robot_ip,

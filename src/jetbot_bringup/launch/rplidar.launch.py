@@ -6,19 +6,19 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.actions import LogInfo
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, TextSubstitution
 from launch_ros.actions import Node
 
 
 def generate_launch_description():
     # Robot namespace support
     robot_id = LaunchConfiguration('robot_id', default='1')
-    robot_namespace = ['robot_', robot_id]
+    robot_namespace = [TextSubstitution(text='robot_'), robot_id]
     
     channel_type =  LaunchConfiguration('channel_type', default='serial')
     serial_port = LaunchConfiguration('serial_port', default='/dev/ttyLIDAR')
     serial_baudrate = LaunchConfiguration('serial_baudrate', default='115200')
-    frame_id = LaunchConfiguration('frame_id', default=['robot_', robot_id, '_lidar_link'])
+    frame_id = [TextSubstitution(text='robot_'), robot_id, TextSubstitution(text='_lidar_link')]
     inverted = LaunchConfiguration('inverted', default='false')
     angle_compensate = LaunchConfiguration('angle_compensate', default='true')
     scan_mode = LaunchConfiguration('scan_mode', default='Standard')
