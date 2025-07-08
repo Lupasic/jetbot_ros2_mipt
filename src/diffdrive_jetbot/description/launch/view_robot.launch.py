@@ -25,6 +25,13 @@ def generate_launch_description():
     declared_arguments = []
     declared_arguments.append(
         DeclareLaunchArgument(
+            "robot_id",
+            default_value="1",
+            description="Unique robot ID for namespace"
+        )
+    )
+    declared_arguments.append(
+        DeclareLaunchArgument(
             "description_package",
             default_value="diffdrive_jetbot",
             description="Description package with robot URDF/xacro files. Usually the argument \
@@ -63,11 +70,13 @@ def generate_launch_description():
     )
 
     # Initialize Arguments
+    robot_id = LaunchConfiguration("robot_id")
     description_package = LaunchConfiguration("description_package")
     description_file = LaunchConfiguration("description_file")
     prefix = LaunchConfiguration("prefix")
     robot_ip = LaunchConfiguration("robot_ip")
     mesh_port = LaunchConfiguration("mesh_port")
+    robot_namespace = ['robot_', robot_id]
 
     # Get URDF via xacro
     robot_description_content = Command(
@@ -79,7 +88,7 @@ def generate_launch_description():
             ),
             " ",
             "prefix:=",
-            prefix,
+            ['robot_', robot_id, '_'],
             " ",
             "robot_ip:=",
             robot_ip,
@@ -97,10 +106,12 @@ def generate_launch_description():
     joint_state_publisher_node = Node(
         package="joint_state_publisher_gui",
         executable="joint_state_publisher_gui",
+        namespace=robot_namespace,
     )
     robot_state_publisher_node = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
+        namespace=robot_namespace,
         output="both",
         parameters=[robot_description],
     )
@@ -108,6 +119,7 @@ def generate_launch_description():
         package="rviz2",
         executable="rviz2",
         name="rviz2",
+        namespace=robot_namespace,
         output="log",
         arguments=["-d", rviz_config_file],
     )

@@ -22,8 +22,15 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
-    # Declare IP address argument for HTTP mesh server
+    # Declare arguments
     declared_arguments = []
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            "robot_id",
+            default_value="1",
+            description="Unique robot ID (1-5)"
+        )
+    )
     declared_arguments.append(
         DeclareLaunchArgument(
             "robot_ip",
@@ -41,10 +48,12 @@ def generate_launch_description():
     )
 
     # Initialize Arguments
+    robot_id = LaunchConfiguration("robot_id")
     robot_ip = LaunchConfiguration("robot_ip")
     mesh_port = LaunchConfiguration("mesh_port")
+    robot_namespace = ['robot_', robot_id]
 
-    # Get URDF via xacro
+    # Get URDF via xacro with robot_id prefix
     robot_description_content = Command(
         [
             PathJoinSubstitution([FindExecutable(name="xacro")]),
@@ -52,6 +61,9 @@ def generate_launch_description():
             PathJoinSubstitution(
                 [FindPackageShare("diffdrive_jetbot"), "urdf", "diffbot.urdf.xacro"]
             ),
+            " ",
+            "prefix:=",
+            ['robot_', robot_id, '_'],
             " ",
             "robot_ip:=",
             robot_ip,
@@ -83,45 +95,35 @@ def generate_launch_description():
     control_node = Node(
         package="controller_manager",
         executable="ros2_control_node",
+        namespace=robot_namespace,
         parameters=[robot_description, robot_controllers],
         output="both",
-        # arguments=['--ros-args', '--log-level', 'debug']
     )
+    
     robot_state_pub_node = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
+        namespace=robot_namespace,
         output="both",
         parameters=[robot_description],
         remappings=[
-            ("/diff_drive_controller/cmd_vel_unstamped", "/cmd_vel"),],
+            ("/diff_drive_controller/cmd_vel_unstamped", "/cmd_vel"),
+        ],
     )
-    # rviz_node = Node(
-    #     package="rviz2",
-    #     executable="rviz2",
-    #     name="rviz2",
-    #     output="log",
-    #     arguments=["-d", rviz_config_file],
-    # )
 
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
         executable="spawner",
+        namespace=robot_namespace,
         arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
     )
 
     robot_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
+        namespace=robot_namespace,
         arguments=["diffbot_base_controller", "--controller-manager", "/controller_manager"],
     )
-
-    # Delay rviz start after `joint_state_broadcaster`
-    # delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
-    #     event_handler=OnProcessExit(
-    #         target_action=joint_state_broadcaster_spawner,
-    #         on_exit=[rviz_node],
-    #     )
-    # )
 
     # Delay start of robot_controller after `joint_state_broadcaster`
     delay_robot_controller_spawner_after_joint_state_broadcaster_spawner = RegisterEventHandler(
@@ -136,7 +138,6 @@ def generate_launch_description():
         control_node,
         robot_state_pub_node,
         joint_state_broadcaster_spawner,
-        # delay_rviz_after_joint_state_broadcaster_spawner,
         delay_robot_controller_spawner_after_joint_state_broadcaster_spawner,
     ]
 

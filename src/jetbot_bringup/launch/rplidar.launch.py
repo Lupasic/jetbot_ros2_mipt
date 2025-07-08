@@ -11,15 +11,23 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
+    # Robot namespace support
+    robot_id = LaunchConfiguration('robot_id', default='1')
+    robot_namespace = ['robot_', robot_id]
+    
     channel_type =  LaunchConfiguration('channel_type', default='serial')
     serial_port = LaunchConfiguration('serial_port', default='/dev/ttyLIDAR')
     serial_baudrate = LaunchConfiguration('serial_baudrate', default='115200')
-    frame_id = LaunchConfiguration('frame_id', default='lidar_link')
+    frame_id = LaunchConfiguration('frame_id', default=['robot_', robot_id, '_lidar_link'])
     inverted = LaunchConfiguration('inverted', default='false')
     angle_compensate = LaunchConfiguration('angle_compensate', default='true')
     scan_mode = LaunchConfiguration('scan_mode', default='Standard')
     
     return LaunchDescription([
+        DeclareLaunchArgument(
+            'robot_id',
+            default_value='1',
+            description='Robot ID for namespace'),
 
         DeclareLaunchArgument(
             'channel_type',
@@ -55,11 +63,11 @@ def generate_launch_description():
             default_value=scan_mode,
             description='Specifying scan mode of lidar'),
 
-
         Node(
             package='rplidar_ros',
             executable='rplidar_node',
             name='rplidar_node',
+            namespace=robot_namespace,
             parameters=[{'channel_type':channel_type,
                          'serial_port': serial_port,
                          'serial_baudrate': serial_baudrate,

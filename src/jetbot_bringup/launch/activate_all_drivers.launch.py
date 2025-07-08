@@ -1,22 +1,35 @@
 from launch import LaunchDescription
-
-from launch.actions import IncludeLaunchDescription
+from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import PathJoinSubstitution
+from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
 from launch_ros.substitutions import FindPackageShare
 from launch_ros.actions import Node
 
 def generate_launch_description():
+    # Declare robot ID argument
+    declared_arguments = []
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            "robot_id",
+            default_value="1",
+            description="Unique robot ID (1-5)"
+        )
+    )
+    
+    # Initialize Arguments
+    robot_id = LaunchConfiguration("robot_id")
+    robot_namespace = ['robot_', robot_id]
 
     twist_stamped_to_twist = Node(
         package='topic_tools',
         executable='relay_field',
         name='twist_stamped_to_twist',
+        namespace=robot_namespace,
         arguments=[
-            'cmd_vel_robot_steering_stamped',      # input topic
-            'cmd_vel_robot_steering',              # output topic
-            'geometry_msgs/msg/Twist',              # output type
-            '{linear: m.twist.linear, angular: m.twist.angular}'                               # expression on m (m — входящее сообщение)
+            'cmd_vel_robot_steering_stamped',
+            'cmd_vel_robot_steering',
+            'geometry_msgs/msg/Twist',
+            '{linear: m.twist.linear, angular: m.twist.angular}'
         ]
     )
 
@@ -24,6 +37,7 @@ def generate_launch_description():
         package='joy_linux',
         executable='joy_linux_node',
         name='joy_node',
+        namespace=robot_namespace,
         parameters=[{
             'dev': "/dev/input/js0"
         }]
@@ -33,6 +47,7 @@ def generate_launch_description():
         package='teleop_twist_joy',
         executable='teleop_node',
         name='teleop_twist_joy_node',
+        namespace=robot_namespace,
         parameters=[
             PathJoinSubstitution([
                 FindPackageShare("jetbot_bringup"), "config", "joy.yaml"
@@ -45,31 +60,38 @@ def generate_launch_description():
     twist_mux = Node(
             package="twist_mux",
             executable="twist_mux",
+            namespace=robot_namespace,
             parameters=[PathJoinSubstitution([
                 FindPackageShare("jetbot_bringup"), "config", "twist_mux.yaml"
             ])],
-            remappings=[('/cmd_vel_out','/diffbot_base_controller/cmd_vel_unstamped')]
+            remappings=[('/cmd_vel_out', '/diffbot_base_controller/cmd_vel_unstamped')]
         )
 
-    # Lidar launch include (если rplidar.launch.py лежит в этом же пакете)
+    # Lidar launch include with robot_id
     lidar_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([
                 FindPackageShare("jetbot_bringup"), "launch", "rplidar.launch.py"
             ])
-        )
+        ),
+        launch_arguments={
+            'robot_id': robot_id,
+        }.items()
     )
 
-    # Diffbot launch include из diffdrive_jetbot
+    # Diffbot launch include with robot_id
     diffbot_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([
                 FindPackageShare("diffdrive_jetbot"), "launch", "diffbot.launch.py"
             ])
-        )
+        ),
+        launch_arguments={
+            'robot_id': robot_id,
+        }.items()
     )
 
-    return LaunchDescription([
+    return LaunchDescription(declared_arguments + [
         # twist_stamped_to_twist,
         #joy_node,
         #teleop_twist_joy_node,
