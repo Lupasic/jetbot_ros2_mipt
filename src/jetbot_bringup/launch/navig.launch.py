@@ -17,8 +17,16 @@ def generate_launch_description():
     # Get the launch directory
     bringup_dir = get_package_share_directory('nav2_bringup')
 
+    # Declare the launch argument for robot_id
+    declare_robot_id_cmd = DeclareLaunchArgument(
+        'robot_id',
+        default_value='2',
+        description='ID of the robot, which is used as namespace.'
+    )
 
-    namespace = LaunchConfiguration('namespace')
+    robot_id = LaunchConfiguration('robot_id')
+
+    namespace = [TextSubstitution(text='robot_'), robot_id]
     use_sim_time = LaunchConfiguration('use_sim_time')
     autostart = LaunchConfiguration('autostart')
     params_file = LaunchConfiguration('params_file')
@@ -60,7 +68,7 @@ def generate_launch_description():
 
     declare_namespace_cmd = DeclareLaunchArgument(
         'namespace',
-        default_value='robot_1',
+        default_value='robot_2',
         description='Top-level namespace')
 
     declare_use_sim_time_cmd = DeclareLaunchArgument(
@@ -262,6 +270,7 @@ def generate_launch_description():
     ld.add_action(stdout_linebuf_envvar)
 
     # Declare the launch options
+    ld.add_action(declare_robot_id_cmd)
     ld.add_action(declare_namespace_cmd)
     ld.add_action(declare_use_sim_time_cmd)
     ld.add_action(declare_params_file_cmd)

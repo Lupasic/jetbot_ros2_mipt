@@ -12,7 +12,7 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     # Robot namespace support
-    robot_id = LaunchConfiguration('robot_id', default='1')
+    robot_id = LaunchConfiguration('robot_id', default='2')
     robot_namespace = [TextSubstitution(text='robot_'), robot_id]
     
     channel_type =  LaunchConfiguration('channel_type', default='serial')

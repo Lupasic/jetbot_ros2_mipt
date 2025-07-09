@@ -12,7 +12,7 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument(
             "robot_id",
-            default_value="1",
+            default_value="2",
             description="Unique robot ID (1-5)"
         )
     )
@@ -115,8 +115,8 @@ def generate_launch_description():
     return LaunchDescription(declared_arguments + [
         create_topic_cmd,
         launch_relay_after_topic_creation,
-        #joy_node,
-        #teleop_twist_joy_node,
+        joy_node,
+        teleop_twist_joy_node,
         twist_mux,
         lidar_launch,
         diffbot_launch,
