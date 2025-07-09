@@ -120,6 +120,10 @@ def generate_launch_description():
         namespace=robot_namespace,
         output="both",
         parameters=[robot_description],
+        # remappings=[
+        #     ("/tf", "tf"),
+        #     ("/tf_static", "tf_static"),
+        # ],
     )
 
     joint_state_broadcaster_spawner = Node(

@@ -1,9 +1,9 @@
 slam_toolbox:
   ros__parameters:
-    odom_frame: odom
-    map_frame: map
-    base_frame: base_footprint
-    scan_topic: /scan
+    odom_frame: robot_1/odom
+    map_frame: robot_1/map
+    base_frame: robot_1/base_footprint
+    scan_topic: scan
     mode: mapping
     use_sim_time: false
     resolution: 0.02
