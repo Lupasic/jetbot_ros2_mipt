@@ -20,7 +20,7 @@ def generate_launch_description():
     frame_id = [robot_namespace,TextSubstitution(text='/lidar_link')]
     inverted = LaunchConfiguration('inverted', default='false')
     angle_compensate = LaunchConfiguration('angle_compensate', default='true')
-    scan_mode = LaunchConfiguration('scan_mode', default='Standard')
+    scan_mode = LaunchConfiguration('scan_mode', default='Sensitivity')
     
     return LaunchDescription([
         DeclareLaunchArgument(

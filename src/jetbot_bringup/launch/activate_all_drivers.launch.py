@@ -10,19 +10,18 @@ def generate_launch_description():
     # Declare robot ID argument
     declared_arguments = []
     declared_arguments.append(
-        DeclareLaunchArgument(
-            "robot_id",
-            default_value="2",
-            description="Unique robot ID (1-5)"
-        )
+       DeclareLaunchArgument(
+        'robot_namespace',
+        default_value='robot_2',
+        description='ID of the robot, which is used as namespace.'
+    )
     )
     
     # Initialize Arguments
-    robot_id = LaunchConfiguration("robot_id")
-    robot_namespace = [TextSubstitution(text="robot_"), robot_id]
+    robot_namespace = LaunchConfiguration('robot_namespace')
 
     # Publish a dummy message to create the topic for twist_stamped_to_twist
-    topic_name = ['/robot_', robot_id, '/cmd_vel_robot_steering_stamped']
+    topic_name = [robot_namespace, '/cmd_vel_robot_steering_stamped']
     message_type = 'geometry_msgs/msg/TwistStamped'
     message_content = '"{header: {stamp: {sec: 0, nanosec: 0}, frame_id: ""}, twist: {linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}}"'
     
@@ -38,8 +37,8 @@ def generate_launch_description():
         name='twist_stamped_to_twist',
         # namespace=robot_namespace,
         arguments=[
-            ['/robot_', robot_id, '/cmd_vel_robot_steering_stamped'],
-            ['/robot_', robot_id, '/cmd_vel_robot_steering'],
+            [robot_namespace, '/cmd_vel_robot_steering_stamped'],
+            [robot_namespace, '/cmd_vel_robot_steering'],
             'geometry_msgs/msg/Twist',
             '{linear: m.twist.linear, angular: m.twist.angular}'
         ]
@@ -88,7 +87,6 @@ def generate_launch_description():
             # arguments=['--ros-args', '--log-level', 'debug']
         )
 
-    # Lidar launch include with robot_id
     lidar_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([
@@ -96,11 +94,10 @@ def generate_launch_description():
             ])
         ),
         launch_arguments={
-            'robot_id': robot_id,
+            'robot_namespace': robot_namespace,
         }.items()
     )
 
-    # Diffbot launch include with robot_id
     diffbot_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([
@@ -108,13 +105,13 @@ def generate_launch_description():
             ])
         ),
         launch_arguments={
-            'robot_id': robot_id,
+            'robot_namespace': robot_namespace,
         }.items()
     )
 
     return LaunchDescription(declared_arguments + [
-        create_topic_cmd,
-        launch_relay_after_topic_creation,
+        # create_topic_cmd,
+        # launch_relay_after_topic_creation,
         joy_node,
         teleop_twist_joy_node,
         twist_mux,

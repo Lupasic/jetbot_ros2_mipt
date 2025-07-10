@@ -21,7 +21,6 @@ from launch_ros.substitutions import FindPackageShare
 import socket
 from launch_ros.descriptions import ParameterFile
 from nav2_common.launch import ReplaceString, RewrittenYaml
-from launch.conditions import IfCondition, UnlessCondition
 
 def get_local_ip():
     """Get the local IP address"""

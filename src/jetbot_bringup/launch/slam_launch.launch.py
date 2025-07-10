@@ -4,14 +4,16 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, TextSubstitution
 from launch_ros.substitutions import FindPackageShare
 from launch_ros.actions import Node
+from nav2_common.launch import ReplaceString, RewrittenYaml
+from launch_ros.descriptions import ParameterFile
 
 def generate_launch_description():
     # Declare arguments
     declared_arguments = []
     declared_arguments.append(
         DeclareLaunchArgument(
-            "robot_id",
-            default_value="2",
+            "robot_namespace",
+            default_value="robot_2",
             description="Unique robot ID (1-5)"
         )
     )
@@ -33,10 +35,24 @@ def generate_launch_description():
     )
 
     # Initialize Arguments
-    robot_id = LaunchConfiguration("robot_id")
     use_sim_time = LaunchConfiguration("use_sim_time")
     slam_params_file = LaunchConfiguration("slam_params_file")
-    robot_namespace = [TextSubstitution(text='robot_'), robot_id]
+    robot_namespace = LaunchConfiguration("robot_namespace")
+
+    slam_params_file = ReplaceString(
+        source_file=slam_params_file,
+        replacements={'<robot_namespace>': (robot_namespace, '/')},
+    )
+
+    slam_params_file = ParameterFile(
+        RewrittenYaml(
+            source_file=slam_params_file,
+            root_key=robot_namespace,
+            param_rewrites={},
+            convert_types=True,
+        ),
+        allow_substs=True,
+    )
 
     # SLAM Toolbox
     slam_toolbox = Node(
@@ -46,16 +62,11 @@ def generate_launch_description():
         namespace=robot_namespace,
         output='screen',
         parameters=[
-            slam_params_file,
-            {'use_sim_time': use_sim_time},
-            {'base_frame': [TextSubstitution(text='robot_'), robot_id, TextSubstitution(text='/base_footprint')]},
-            {'odom_frame': [TextSubstitution(text='robot_'), robot_id, TextSubstitution(text='/odom')]},
-            {'map_frame': [TextSubstitution(text='robot_'), robot_id, TextSubstitution(text='/map')]},
-            {'scan_topic': 'scan'}  # Will be namespaced automatically
+            slam_params_file
         ],
-        remappings=[('/map','map')
-            # ('/tf', 'tf'),
-            # ('/tf_static', 'tf_static')
+        remappings=[('/map','map'),
+            ('/tf', 'tf'),
+            ('/tf_static', 'tf_static')
         ]
     )
 

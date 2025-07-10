@@ -5,28 +5,19 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, GroupAction, SetEnvironmentVariable
 from launch.conditions import IfCondition
-from launch.substitutions import LaunchConfiguration, PythonExpression, TextSubstitution, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration, PythonExpression, PathJoinSubstitution
+from launch_ros.actions import PushRosNamespace
 from launch_ros.actions import LoadComposableNodes
 from launch_ros.actions import Node
 from launch_ros.descriptions import ComposableNode, ParameterFile
+from nav2_common.launch import ReplaceString, RewrittenYaml
 from launch_ros.substitutions import FindPackageShare
-from nav2_common.launch import RewrittenYaml
-
 
 def generate_launch_description():
     # Get the launch directory
     bringup_dir = get_package_share_directory('nav2_bringup')
 
-    # Declare the launch argument for robot_id
-    declare_robot_id_cmd = DeclareLaunchArgument(
-        'robot_id',
-        default_value='2',
-        description='ID of the robot, which is used as namespace.'
-    )
-
-    robot_id = LaunchConfiguration('robot_id')
-
-    namespace = [TextSubstitution(text='robot_'), robot_id]
+    namespace = LaunchConfiguration('robot_namespace')
     use_sim_time = LaunchConfiguration('use_sim_time')
     autostart = LaunchConfiguration('autostart')
     params_file = LaunchConfiguration('params_file')
@@ -44,21 +35,30 @@ def generate_launch_description():
                        'waypoint_follower',
                        'velocity_smoother']
 
-
+    # Map fully qualified names to relative ones so the node's namespace can be prepended.
+    # In case of the transforms (tf), currently, there doesn't seem to be a better alternative
+    # https://github.com/ros/geometry2/issues/32
+    # https://github.com/ros/robot_state_publisher/pull/30
+    # TODO(orduno) Substitute with `PushNodeRemapping`
     #              https://github.com/ros2/launch_ros/issues/56
-    # remappings = [('/tf', 'tf'),
-    #               ('/tf_static', 'tf_static')]
-    remappings = []
+    remappings = [('/tf', 'tf'),
+                  ('/tf_static', 'tf_static')]
 
     # Create our own temporary YAML files that include substitutions
     param_substitutions = {
         'use_sim_time': use_sim_time,
         'autostart': autostart}
 
+    params_file = ReplaceString(
+        source_file=params_file,
+        replacements={'<robot_namespace>': (namespace, '/')},
+    )
+
+
     configured_params = ParameterFile(
         RewrittenYaml(
             source_file=params_file,
-            # root_key=namespace,
+            root_key=namespace,
             param_rewrites=param_substitutions,
             convert_types=True),
         allow_substs=True)
@@ -67,7 +67,7 @@ def generate_launch_description():
         'RCUTILS_LOGGING_BUFFERED_STREAM', '1')
 
     declare_namespace_cmd = DeclareLaunchArgument(
-        'namespace',
+        'robot_namespace',
         default_value='robot_2',
         description='Top-level namespace')
 
@@ -108,12 +108,24 @@ def generate_launch_description():
     load_nodes = GroupAction(
         condition=IfCondition(PythonExpression(['not ', use_composition])),
         actions=[
+            PushRosNamespace(namespace=namespace),
+            Node(
+            package='topic_tools',
+            executable='relay',
+            name='relay_local_scan',
+            arguments=['scan', 'local_costmap/scan'],
+            remappings=remappings),
+        Node(
+            package='topic_tools',
+            executable='relay',
+            name='relay_global_scan',
+            arguments=['scan', 'global_costmap/scan'],
+            remappings=remappings),
             Node(
                 package='nav2_controller',
                 executable='controller_server',
                 output='screen',
                 respawn=use_respawn,
-                namespace=namespace,
                 respawn_delay=2.0,
                 parameters=[configured_params],
                 arguments=['--ros-args', '--log-level', log_level],
@@ -124,7 +136,6 @@ def generate_launch_description():
                 name='smoother_server',
                 output='screen',
                 respawn=use_respawn,
-                namespace=namespace,
                 respawn_delay=2.0,
                 parameters=[configured_params],
                 arguments=['--ros-args', '--log-level', log_level],
@@ -135,7 +146,6 @@ def generate_launch_description():
                 name='planner_server',
                 output='screen',
                 respawn=use_respawn,
-                namespace=namespace,
                 respawn_delay=2.0,
                 parameters=[configured_params],
                 arguments=['--ros-args', '--log-level', log_level],
@@ -146,7 +156,6 @@ def generate_launch_description():
                 name='behavior_server',
                 output='screen',
                 respawn=use_respawn,
-                namespace=namespace,
                 respawn_delay=2.0,
                 parameters=[configured_params],
                 arguments=['--ros-args', '--log-level', log_level],
@@ -157,7 +166,6 @@ def generate_launch_description():
                 name='bt_navigator',
                 output='screen',
                 respawn=use_respawn,
-                namespace=namespace,
                 respawn_delay=2.0,
                 parameters=[configured_params],
                 arguments=['--ros-args', '--log-level', log_level],
@@ -168,7 +176,6 @@ def generate_launch_description():
                 name='waypoint_follower',
                 output='screen',
                 respawn=use_respawn,
-                namespace=namespace,
                 respawn_delay=2.0,
                 parameters=[configured_params],
                 arguments=['--ros-args', '--log-level', log_level],
@@ -179,7 +186,6 @@ def generate_launch_description():
                 name='velocity_smoother',
                 output='screen',
                 respawn=use_respawn,
-                namespace=namespace,
                 respawn_delay=2.0,
                 parameters=[configured_params],
                 arguments=['--ros-args', '--log-level', log_level],
@@ -190,77 +196,11 @@ def generate_launch_description():
                 executable='lifecycle_manager',
                 name='lifecycle_manager_navigation',
                 output='screen',
-                namespace=namespace,
                 arguments=['--ros-args', '--log-level', log_level],
                 parameters=[{'use_sim_time': use_sim_time},
                             {'autostart': autostart},
                             {'node_names': lifecycle_nodes}]),
         ]
-    )
-
-    load_composable_nodes = LoadComposableNodes(
-        condition=IfCondition(use_composition),
-        target_container=container_name_full,
-        composable_node_descriptions=[
-            ComposableNode(
-                package='nav2_controller',
-                plugin='nav2_controller::ControllerServer',
-                name='controller_server',
-                parameters=[configured_params],
-                namespace=namespace,
-                remappings=remappings + [('cmd_vel', 'cmd_vel')],),
-            ComposableNode(
-                package='nav2_smoother',
-                plugin='nav2_smoother::SmootherServer',
-                name='smoother_server',
-                parameters=[configured_params],
-                namespace=namespace,
-                remappings=remappings),
-            ComposableNode(
-                package='nav2_planner',
-                plugin='nav2_planner::PlannerServer',
-                name='planner_server',
-                parameters=[configured_params],
-                namespace=namespace,
-                remappings=remappings),
-            ComposableNode(
-                package='nav2_behaviors',
-                plugin='behavior_server::BehaviorServer',
-                name='behavior_server',
-                parameters=[configured_params],
-                namespace=namespace,
-                remappings=remappings),
-            ComposableNode(
-                package='nav2_bt_navigator',
-                plugin='nav2_bt_navigator::BtNavigator',
-                name='bt_navigator',
-                parameters=[configured_params],
-                namespace=namespace,
-                remappings=remappings),
-            ComposableNode(
-                package='nav2_waypoint_follower',
-                plugin='nav2_waypoint_follower::WaypointFollower',
-                name='waypoint_follower',
-                parameters=[configured_params],
-                namespace=namespace,
-                remappings=remappings),
-            ComposableNode(
-                package='nav2_velocity_smoother',
-                plugin='nav2_velocity_smoother::VelocitySmoother',
-                name='velocity_smoother',
-                parameters=[configured_params],
-                namespace=namespace,
-                remappings=remappings +
-                           [('cmd_vel', 'cmd_vel'), ('cmd_vel_smoothed', 'cmd_vel')]),
-            ComposableNode(
-                package='nav2_lifecycle_manager',
-                plugin='nav2_lifecycle_manager::LifecycleManager',
-                name='lifecycle_manager_navigation',
-                namespace=namespace,
-                parameters=[{'use_sim_time': use_sim_time,
-                             'autostart': autostart,
-                             'node_names': lifecycle_nodes}]),
-        ],
     )
 
     # Create the launch description and populate
@@ -270,7 +210,6 @@ def generate_launch_description():
     ld.add_action(stdout_linebuf_envvar)
 
     # Declare the launch options
-    ld.add_action(declare_robot_id_cmd)
     ld.add_action(declare_namespace_cmd)
     ld.add_action(declare_use_sim_time_cmd)
     ld.add_action(declare_params_file_cmd)
@@ -281,6 +220,5 @@ def generate_launch_description():
     ld.add_action(declare_log_level_cmd)
     # Add the actions to launch all of the navigation nodes
     ld.add_action(load_nodes)
-    ld.add_action(load_composable_nodes)
 
     return ld
