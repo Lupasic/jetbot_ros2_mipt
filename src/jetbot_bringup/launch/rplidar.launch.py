@@ -12,21 +12,20 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     # Robot namespace support
-    robot_id = LaunchConfiguration('robot_id', default='2')
-    robot_namespace = [TextSubstitution(text='robot_'), robot_id]
+    robot_namespace = LaunchConfiguration("robot_namespace")
     
     channel_type =  LaunchConfiguration('channel_type', default='serial')
     serial_port = LaunchConfiguration('serial_port', default='/dev/ttyLIDAR')
     serial_baudrate = LaunchConfiguration('serial_baudrate', default='115200')
-    frame_id = [TextSubstitution(text='robot_'), robot_id, TextSubstitution(text='/lidar_link')]
+    frame_id = [robot_namespace,TextSubstitution(text='/lidar_link')]
     inverted = LaunchConfiguration('inverted', default='false')
     angle_compensate = LaunchConfiguration('angle_compensate', default='true')
     scan_mode = LaunchConfiguration('scan_mode', default='Standard')
     
     return LaunchDescription([
         DeclareLaunchArgument(
-            'robot_id',
-            default_value='1',
+            'robot_namespace',
+            default_value='robot_2',
             description='Robot ID for namespace'),
 
         DeclareLaunchArgument(

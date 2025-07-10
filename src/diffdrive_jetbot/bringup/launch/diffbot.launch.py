@@ -16,11 +16,12 @@ from launch import LaunchDescription
 from launch.actions import RegisterEventHandler, DeclareLaunchArgument, ExecuteProcess
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import Command, FindExecutable, PathJoinSubstitution, LaunchConfiguration, TextSubstitution
-
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 import socket
-
+from launch_ros.descriptions import ParameterFile
+from nav2_common.launch import ReplaceString, RewrittenYaml
+from launch.conditions import IfCondition, UnlessCondition
 
 def get_local_ip():
     """Get the local IP address"""
@@ -38,8 +39,8 @@ def generate_launch_description():
     declared_arguments = []
     declared_arguments.append(
         DeclareLaunchArgument(
-            "robot_id",
-            default_value="2",
+            "robot_namespace",
+            default_value="robot_2",
             description="Unique robot ID (1-5)"
         )
     )
@@ -59,12 +60,11 @@ def generate_launch_description():
     )
 
     # Initialize Arguments
-    robot_id = LaunchConfiguration("robot_id")
+    robot_namespace = LaunchConfiguration("robot_namespace")
     robot_ip = LaunchConfiguration("robot_ip")
     mesh_port = LaunchConfiguration("mesh_port")
-    
-    # Correct namespace formation using TextSubstitution
-    robot_namespace = [TextSubstitution(text="robot_"), robot_id]
+    cur_controller_manager = [TextSubstitution(text="controller_manager")]
+    cur_remappings=[("/tf", "tf"),("/tf_static", "tf_static")]
 
     # Get URDF via xacro with robot_id prefix
     robot_description_content = Command(
@@ -75,10 +75,8 @@ def generate_launch_description():
                 [FindPackageShare("diffdrive_jetbot"), "urdf", "diffbot.urdf.xacro"]
             ),
             " ",
-            "prefix:=robot_",
-            robot_id,
-            "/",
-            " ",
+            "prefix:=",robot_namespace,
+            "/ ",
             "robot_ip:=",
             robot_ip,
             " ",
@@ -106,11 +104,27 @@ def generate_launch_description():
         output="log"
     )
 
+    robot_controllers = ReplaceString(
+        source_file=robot_controllers,
+        replacements={'<robot_namespace>': (robot_namespace, '/')},
+    )
+
+    robot_controllers = ParameterFile(
+        RewrittenYaml(
+            source_file=robot_controllers,
+            root_key=robot_namespace,
+            param_rewrites={},
+            convert_types=True,
+        ),
+        allow_substs=True,
+    )
+
     control_node = Node(
         package="controller_manager",
         executable="ros2_control_node",
         namespace=robot_namespace,
         parameters=[robot_description, robot_controllers],
+        remappings=cur_remappings,
         output="both",
     )
     
@@ -120,24 +134,23 @@ def generate_launch_description():
         namespace=robot_namespace,
         output="both",
         parameters=[robot_description],
-        # remappings=[
-        #     ("/tf", "tf"),
-        #     ("/tf_static", "tf_static"),
-        # ],
+        remappings=cur_remappings,
     )
 
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
         executable="spawner",
         namespace=robot_namespace,
-arguments=["joint_state_broadcaster", "--controller-manager", [TextSubstitution(text="/robot_"), robot_id, TextSubstitution(text="/controller_manager")]],
+        remappings=cur_remappings,
+arguments=["joint_state_broadcaster", "--controller-manager", cur_controller_manager],
     )
 
     robot_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
         namespace=robot_namespace,
-        arguments=["diffbot_base_controller", "--controller-manager", [TextSubstitution(text="/robot_"), robot_id, TextSubstitution(text="/controller_manager")]],
+        remappings=cur_remappings,
+        arguments=["diffbot_base_controller", "--controller-manager", cur_controller_manager],
     )
 
     # Delay start of robot_controller after `joint_state_broadcaster`

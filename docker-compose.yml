@@ -25,4 +25,4 @@ services:
       - /dev/ttyMOTOR:/dev/ttyMOTOR
       - /dev/video0:/dev/video0
     working_dir: /home/app/ros2_ws
-    command: bash -c "source install/setup.bash && ros2 launch jetbot_bringup all_robot_launches.launch.py"
+    # command: bash -c "source install/setup.bash && ros2 launch jetbot_bringup all_robot_launches.launch.py"

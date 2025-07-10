@@ -7,12 +7,12 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description():
     # Declare the launch argument for robot_id
     declare_robot_id_cmd = DeclareLaunchArgument(
-        'robot_id',
-        default_value='2',
+        'robot_namespace',
+        default_value='robot_2',
         description='ID of the robot, which is used as namespace.'
     )
 
-    robot_id = LaunchConfiguration('robot_id')
+    robot_namespace = LaunchConfiguration('robot_namespace')
 
     # Get the package share directory
     jetbot_bringup_pkg_share = FindPackageShare('jetbot_bringup')
@@ -27,7 +27,7 @@ def generate_launch_description():
                 'activate_all_drivers.launch.py'
             ])
         ),
-        launch_arguments={'robot_id': robot_id}.items()
+        launch_arguments={'robot_namespace': robot_namespace}.items()
     )
 
     # Include slam_launch.py - will start 5 seconds after activate_all_drivers
@@ -42,7 +42,7 @@ def generate_launch_description():
                         'slam_launch.launch.py'
                     ])
                 ),
-                launch_arguments={'robot_id': robot_id}.items()
+                launch_arguments={'robot_namespace': robot_namespace}.items()
             )
         ]
     )
@@ -59,7 +59,7 @@ def generate_launch_description():
                         'navig.launch.py'
                     ])
                 ),
-                launch_arguments={'robot_id': robot_id}.items()
+                launch_arguments={'robot_namespace': robot_namespace}.items()
             )
         ]
     )
