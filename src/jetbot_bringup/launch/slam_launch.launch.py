@@ -13,7 +13,7 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument(
             "robot_namespace",
-            default_value="robot_2",
+            default_value="robot_3",
             description="Unique robot ID (1-5)"
         )
     )
