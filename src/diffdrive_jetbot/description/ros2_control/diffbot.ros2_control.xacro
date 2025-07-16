@@ -16,7 +16,7 @@
         <param name="deadzone">1600</param>
         <param name="mline">11</param>
         <param name="mphase">40</param>
-        <param name="wdiameter">67</param>
+        <param name="wdiameter">63</param>
         <param name="max_motor_rpm">300</param>
 
       </hardware>
