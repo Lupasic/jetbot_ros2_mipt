@@ -147,7 +147,7 @@ global_costmap:
       publish_frequency: 1.0
       global_frame: <robot_namespace>map
       robot_base_frame: <robot_namespace>base_footprint
-      robot_radius: 0.12 # radius set and used, so no footprint points
+      robot_radius: 0.08 # radius set and used, so no footprint points
       resolution: 0.02
       plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
       obstacle_layer:
@@ -180,7 +180,7 @@ global_costmap:
         plugin: "nav2_costmap_2d::InflationLayer"
         enabled: true
         cost_scaling_factor: 2.0
-        inflation_radius: 0.128
+        inflation_radius: 0.08
         inflate_unknown: false
         inflate_around_unknown: true
       always_send_full_costmap: true
@@ -197,12 +197,12 @@ local_costmap:
       width: 1
       height: 1
       resolution: 0.02
-      robot_radius: 0.12 # radius set and used, so no footprint points
+      robot_radius: 0.08 # radius set and used, so no footprint points
       plugins: ["voxel_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.128
+        cost_scaling_factor: 2.0
+        inflation_radius: 0.08
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
