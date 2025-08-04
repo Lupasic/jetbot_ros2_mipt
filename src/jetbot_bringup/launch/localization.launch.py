@@ -35,15 +35,15 @@ def generate_launch_description():
     log_level = LaunchConfiguration('log_level')
     map_yaml_file = LaunchConfiguration('map')
 
-    lifecycle_nodes = ['controller_server',
+    lifecycle_nodes = ['map_server',
+                       'amcl',
+                       'controller_server',
                        'smoother_server',
                        'planner_server',
                        'behavior_server',
                        'bt_navigator',
                        'waypoint_follower',
-                       'velocity_smoother',
-                       'map_server',
-                       'amcl']
+                       'velocity_smoother']
 
     # Map fully qualified names to relative ones so the node's namespace can be prepended.
     # In case of the transforms (tf), currently, there doesn't seem to be a better alternative
@@ -92,7 +92,7 @@ def generate_launch_description():
         default_value=PathJoinSubstitution([
                         FindPackageShare("jetbot_bringup"),
                         "config",
-                        "nav2_default_params.yaml",
+                        "nav2_default_localization_ignore_dyn_obst.yaml",
                     ]),
         description='Full path to the ROS2 parameters file to use for all launched nodes')
 
@@ -121,7 +121,7 @@ def generate_launch_description():
         default_value=PathJoinSubstitution([
             FindPackageShare('jetbot_bringup'),
             'maps',
-            'map_maze_1.yaml'
+            'new_maze.yaml'
         ]),
         description='Full path to map yaml file to load')
 
