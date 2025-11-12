@@ -32,7 +32,7 @@ def generate_launch_description():
 
     # Include navig.launch.py - will start 10 seconds after activate_all_drivers
     navig_launch = TimerAction(
-        period=15.0,
+        period=20.0,
         actions=[
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
@@ -46,12 +46,30 @@ def generate_launch_description():
             )
         ]
     )
+    
+    # Include nav2_status_bridge.launch.py - starts after nav2 is ready
+    nav2_status_bridge_launch = TimerAction(
+        period=15.0,
+        actions=[
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    PathJoinSubstitution([
+                        jetbot_bringup_pkg_share,
+                        'launch',
+                        'nav2_status_bridge.launch.py'
+                    ])
+                ),
+                launch_arguments={'robot_namespace': robot_namespace}.items()
+            )
+        ]
+    )
 
     # Create the launch description and populate
     ld = LaunchDescription()
 
     ld.add_action(declare_robot_id_cmd)
     ld.add_action(activate_all_drivers_launch)
+    ld.add_action(nav2_status_bridge_launch)
     ld.add_action(navig_launch)
 
     return ld

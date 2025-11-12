@@ -161,7 +161,7 @@ arguments=["joint_state_broadcaster", "--controller-manager", cur_controller_man
     )
 
     nodes = [
-        # mesh_server,
+        mesh_server,
         control_node,
         robot_state_pub_node,
         joint_state_broadcaster_spawner,

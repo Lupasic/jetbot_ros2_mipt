@@ -177,7 +177,7 @@ global_costmap:
         map_subscribe_transient_local: true
         enabled: true
         subscribe_to_updates: true
-        transform_tolerance: 0.2
+        transform_tolerance: 0.3
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         enabled: true
@@ -231,7 +231,7 @@ local_costmap:
         map_subscribe_transient_local: true
         enabled: true
         subscribe_to_updates: true
-        transform_tolerance: 0.2
+        transform_tolerance: 0.3
       always_send_full_costmap: True
 
 
@@ -283,7 +283,7 @@ recoveries_server:
       plugin: "nav2_recoveries/Wait"
     global_frame: <robot_namespace>odom
     robot_base_frame: <robot_namespace>base_footprint
-    transform_timeout: 0.2
+    transform_timeout: 0.3
     use_sim_time: false
     simulate_ahead_time: 2.0
     max_rotational_vel: 1.0
@@ -414,9 +414,9 @@ amcl:
     pf_err: 0.02                     # required accuracy (smaller = more accurate)
     pf_z: 0.99                       # confidence probability (keep as is)
 
-    transform_tolerance: 0.3         # react faster
+    transform_tolerance: 1.0         # react faster
     resample_interval: 1
-    save_pose_rate: 1.0              # can be more frequent
+    save_pose_rate: 2.0              # can be more frequent
     tf_broadcast: true
     robot_model_type: "nav2_amcl::DifferentialMotionModel"
 

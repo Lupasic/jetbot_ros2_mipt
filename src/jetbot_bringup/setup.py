@@ -25,6 +25,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'nav2_status_publisher = jetbot_bringup.nav2_status_publisher:main',
         ],
     },
 )

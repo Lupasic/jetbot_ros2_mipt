@@ -16,8 +16,8 @@ services:
       - ./src:/home/app/ros2_ws/src
     environment:
       - DISPLAY=${DISPLAY}
-      - ROS_DOMAIN_ID=40
-      - ROS_LOCALHOST_ONLY=1
+      - ROS_DOMAIN_ID=10
+      - ROS_LOCALHOST_ONLY=0
       - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
     devices:
       - /dev/input:/dev/input
@@ -26,9 +26,8 @@ services:
       - /dev/video0:/dev/video0
     working_dir: /home/app/ros2_ws
     # command: bash -c "source install/setup.bash && ros2 launch jetbot_bringup all_robot_launches_localization.launch.py robot_namespace:=robot_2"
-    # command: bash -c "source install/setup.bash && 
-    #            cd /home/app/ros2_ws/src/zenoh-plugin-ros2dds-1.6.2-aarch64-unknown-linux-gnu-standalone &&
-    #            ./zenoh-bridge-ros2dds -c DEFAULT_CONFIG.json5 &
-    #            sleep 2 &&
-    #            source /home/app/ros2_ws/install/setup.bash &&
-    #            ros2 launch jetbot_bringup all_robot_launches_localization.launch.py robot_namespace:=robot_2"
+    command: bash -c "cd /home/app/ros2_ws/src/zenoh-plugin-ros2dds-1.6.2-aarch64-unknown-linux-gnu-standalone &&
+               ./zenoh-bridge-ros2dds -c robot_config.json5 &
+               sleep 2 &&
+               source /home/app/ros2_ws/install/setup.bash &&
+               ros2 launch jetbot_bringup all_robot_launches_localization.launch.py robot_namespace:=robot_2"
