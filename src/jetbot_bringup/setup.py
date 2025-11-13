@@ -26,6 +26,7 @@ setup(
     entry_points={
         'console_scripts': [
             'nav2_status_publisher = jetbot_bringup.nav2_status_publisher:main',
+            'amcl_pose_relay = jetbot_bringup.amcl_pose_relay:main',
         ],
     },
 )

@@ -63,6 +63,23 @@ def generate_launch_description():
             )
         ]
     )
+    
+    # Include amcl_pose_relay.launch.py - relay for AMCL initial pose
+    amcl_pose_relay_launch = TimerAction(
+        period=15.0,
+        actions=[
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    PathJoinSubstitution([
+                        jetbot_bringup_pkg_share,
+                        'launch',
+                        'amcl_pose_relay.launch.py'
+                    ])
+                ),
+                launch_arguments={'robot_namespace': robot_namespace}.items()
+            )
+        ]
+    )
 
     # Create the launch description and populate
     ld = LaunchDescription()
@@ -70,6 +87,7 @@ def generate_launch_description():
     ld.add_action(declare_robot_id_cmd)
     ld.add_action(activate_all_drivers_launch)
     ld.add_action(nav2_status_bridge_launch)
+    ld.add_action(amcl_pose_relay_launch)
     ld.add_action(navig_launch)
 
     return ld
