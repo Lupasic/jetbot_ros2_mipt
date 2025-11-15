@@ -121,7 +121,7 @@ def generate_launch_description():
         default_value=PathJoinSubstitution([
             FindPackageShare('jetbot_bringup'),
             'maps',
-            'new_maze.yaml'
+            'map_full_labirint.yaml'
         ]),
         description='Full path to map yaml file to load')
 

@@ -14,11 +14,13 @@ services:
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
       - ./src:/home/app/ros2_ws/src
+      - ./cyclonedds.xml:/home/app/cyclonedds.xml
     environment:
       - DISPLAY=${DISPLAY}
       - ROS_DOMAIN_ID=10
       - ROS_LOCALHOST_ONLY=0
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - CYCLONEDDS_URI=file:///home/app/cyclonedds.xml
       # - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
     devices:
       - /dev/input:/dev/input
