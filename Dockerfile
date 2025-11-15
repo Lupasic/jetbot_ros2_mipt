@@ -18,7 +18,8 @@ git clone https://github.com/ros-teleop/twist_mux.git -b humble && \
 git clone https://github.com/ros-visualization/rqt_robot_steering.git -b 1.0.1 && \
 git clone https://github.com/ros-tooling/topic_tools.git -b humble && \
 git clone https://github.com/ros2/teleop_twist_joy.git -b humble && \
-git clone https://github.com/ros-drivers/joystick_drivers.git -b ros2
+git clone https://github.com/ros-drivers/joystick_drivers.git -b ros2 && \
+git clone https://github.com/ros2/rmw_cyclonedds.git -b humble
 
 WORKDIR ${ROS_ROOT}
 
@@ -41,4 +42,4 @@ USER ${APP_USER}
 WORKDIR /home/app/ros2_ws
 COPY src src
 RUN /bin/bash -c "source /opt/ros/${ROS_VER}/install/setup.bash && colcon build \
---parallel-workers 3 && source install/setup.bash"
+--parallel-workers 3 --symlink-install && source install/setup.bash"

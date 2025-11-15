@@ -417,6 +417,7 @@ amcl:
     transform_tolerance: 0.3         # react faster
     resample_interval: 1
     save_pose_rate: 1.0              # can be more frequent
+    set_initial_pose: true
     tf_broadcast: true
     robot_model_type: "nav2_amcl::DifferentialMotionModel"
 
