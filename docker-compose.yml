@@ -1,6 +1,5 @@
 services:
   jetbot:
-    # image: jetbot_main_docker
     image: jetbot_full_ros2
     # privileged: True
     cap_add:
@@ -17,7 +16,7 @@ services:
       - ./cyclonedds.xml:/home/app/cyclonedds.xml
     environment:
       - DISPLAY=${DISPLAY}
-      - ROS_DOMAIN_ID=10
+      - ROS_DOMAIN_ID=52
       - ROS_LOCALHOST_ONLY=0
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       - CYCLONEDDS_URI=file:///home/app/cyclonedds.xml

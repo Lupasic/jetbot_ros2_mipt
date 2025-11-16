@@ -25,6 +25,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'simple_nav_server = jetbot_bringup.simple_nav_server:main',
         ],
     },
 )
