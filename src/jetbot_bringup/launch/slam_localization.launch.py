@@ -28,7 +28,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             "slam_params_file",
             default_value=PathJoinSubstitution([
-                FindPackageShare("jetbot_bringup"), "config", "nav2_default_localization_ignore_dyn_obst.yaml"
+                FindPackageShare("jetbot_bringup"), "config", "slam_toolbox_localization.yaml"
             ]),
             description="Path to the slam parameters file"
         )

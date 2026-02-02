@@ -28,7 +28,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             "slam_params_file",
             default_value=PathJoinSubstitution([
-                FindPackageShare("jetbot_bringup"), "config", "slam_toolbox_online_async.yaml"
+                FindPackageShare("jetbot_bringup"), "config", "slam_toolbox_online_async_new.yaml"
             ]),
             description="Path to the slam parameters file"
         )

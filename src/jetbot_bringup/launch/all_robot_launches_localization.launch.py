@@ -48,20 +48,23 @@ def generate_launch_description():
         ]
     )
 
-    # Launch SimpleNavServer - starts 20 seconds after drivers (5s after localization)
-    simple_nav_server_node = TimerAction(
+    # Robot navigation bridge - starts 20 seconds after activate_all_drivers (after Nav2)
+    robot_nav_bridge_launch = TimerAction(
         period=20.0,
         actions=[
             Node(
                 package='jetbot_bringup',
-                executable='simple_nav_server',
-                name='simple_nav_server',
+                executable='robot_nav_bridge',
+                name='robot_nav_bridge',
                 namespace=robot_namespace,
-                output='screen',
-                parameters=[],
+                parameters=[{
+                    'robot_namespace': robot_namespace
+                }],
+                output='screen'
             )
         ]
     )
+
 
     # Create the launch description and populate
     ld = LaunchDescription()
@@ -69,6 +72,6 @@ def generate_launch_description():
     ld.add_action(declare_robot_id_cmd)
     ld.add_action(activate_all_drivers_launch)
     ld.add_action(navig_launch)
-    ld.add_action(simple_nav_server_node)
+    ld.add_action(robot_nav_bridge_launch)
 
     return ld
