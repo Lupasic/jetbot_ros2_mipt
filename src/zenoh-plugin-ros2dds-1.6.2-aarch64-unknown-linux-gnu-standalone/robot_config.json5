@@ -17,15 +17,26 @@
       nodename: "zenoh_bridge_robot_2",
 
       allow: {
-            publishers: [".*/tf", ".*/tf_static", ".*/map", ".*/nav/status"],
-            subscribers: [".*/initialpose", ".*/nav/goal", ".*/nav/cancel"],
+            publishers: [
+              ".*/tf",
+              ".*/tf_static",
+              ".*/map",
+              ".*/nav/goal_reached"
+            ],
+            subscribers: [
+              ".*/initialpose",
+              ".*/nav/goal"
+            ],
             service_servers: [],
             service_clients: [],
             action_clients: [],
             action_servers: []
       },
-      pub_priorities: [".*/initialpose=1:express", ".*/nav/goal=1:express", ".*/nav/status=1:express", ".*/nav/cancel=1:express"],
-      pub_max_frequencies: [".*/tf=10", ".*/tf_static=5", ".*/nav/status=5"],
+      pub_priorities: [
+        ".*/initialpose=1:express",
+        ".*/nav/goal=1:express",
+        ".*/nav/goal_reached=1:express"
+      ],
       
       //// queries_timeout: Timeouts configuration for various Zenoh queries.
       ////                  Each field is optional. If not set, the 'default' timeout (5.0 seconds by default) applies to all queries,
