@@ -1,1 +1,3 @@
 *.pyc
+src/diffdrive_jetbot/tune_scripts/transients_data
+src/diffdrive_jetbot/tune_scripts/pid_3d_plots
