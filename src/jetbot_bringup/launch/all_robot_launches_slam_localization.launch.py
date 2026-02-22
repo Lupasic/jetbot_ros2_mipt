@@ -18,13 +18,24 @@ def generate_launch_description():
         default_value=PathJoinSubstitution([
             FindPackageShare('jetbot_bringup'),
             'config',
-            'nav2_default_localization_ignore_dyn_obst.yaml'
+            'nav2_default_localization_ignore_dyn_obst_test.yaml'
         ]),
         description='Full path to the ROS2 parameters file to use for navigation nodes'
     )
 
+    declare_map_file_name_cmd = DeclareLaunchArgument(
+        'map_file_name',
+        default_value=PathJoinSubstitution([
+            FindPackageShare('jetbot_bringup'),
+            'maps',
+            'map_labirint_tbank'
+        ]),
+        description='Full path to the map file (without extension) for SLAM localization'
+    )
+
     robot_namespace = LaunchConfiguration('robot_namespace')
     params_file = LaunchConfiguration('params_file')
+    map_file_name = LaunchConfiguration('map_file_name')
 
     # Get the package share directory
     jetbot_bringup_pkg_share = FindPackageShare('jetbot_bringup')
@@ -54,7 +65,10 @@ def generate_launch_description():
                         'slam_localization.launch.py'
                     ])
                 ),
-                launch_arguments={'robot_namespace': robot_namespace}.items()
+                launch_arguments={
+                    'robot_namespace': robot_namespace,
+                    'map_file_name': map_file_name
+                }.items()
             )
         ]
     )
@@ -102,6 +116,7 @@ def generate_launch_description():
 
     ld.add_action(declare_robot_id_cmd)
     ld.add_action(declare_params_file_cmd)
+    ld.add_action(declare_map_file_name_cmd)
     ld.add_action(activate_all_drivers_launch)
     ld.add_action(slam_localization_launch)
     ld.add_action(navig_launch)

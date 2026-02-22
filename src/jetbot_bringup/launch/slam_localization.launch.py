@@ -33,11 +33,21 @@ def generate_launch_description():
             description="Path to the slam parameters file"
         )
     )
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            "map_file_name",
+            default_value=PathJoinSubstitution([
+                FindPackageShare("jetbot_bringup"), "maps", "map_labirint_tbank"
+            ]),
+            description="Full path to the map file (without extension)"
+        )
+    )
 
     # Initialize Arguments
     use_sim_time = LaunchConfiguration("use_sim_time")
     slam_params_file = LaunchConfiguration("slam_params_file")
     robot_namespace = LaunchConfiguration("robot_namespace")
+    map_file_name = LaunchConfiguration("map_file_name")
 
     slam_params_file = ReplaceString(
         source_file=slam_params_file,
@@ -62,7 +72,8 @@ def generate_launch_description():
         namespace=robot_namespace,
         output='screen',
         parameters=[
-            slam_params_file
+            slam_params_file,
+            {'map_file_name': map_file_name}
         ],
         remappings=[('/map','map'),
             ('/tf', 'tf'),
