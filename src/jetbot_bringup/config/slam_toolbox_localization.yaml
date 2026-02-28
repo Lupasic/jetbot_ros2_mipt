@@ -39,21 +39,22 @@ slam_toolbox:
     # General Parameters
     use_scan_matching: true
     use_scan_barycenter: true
-    minimum_travel_distance: 0.02
-    minimum_travel_heading: 0.03
+    minimum_travel_distance: 0.05  # increased: very small values cause excessive matching near edges
+    minimum_travel_heading: 0.05   # increased: same reason
     scan_buffer_size: 40
     scan_buffer_maximum_scan_distance: 1.8
     link_match_minimum_response_fine: 0.15  
     link_scan_maximum_distance: 1.5
     loop_search_maximum_distance: 5.5
-    do_loop_closing: true 
+    do_loop_closing: false  # disabled: loop closing in localization mode can corrupt pose graph near edges
     loop_match_minimum_chain_size: 20           
     loop_match_maximum_variance_coarse: 1.5 
     loop_match_minimum_response_coarse: 0.5  
     loop_match_minimum_response_fine: 0.7
 
     # Correlation Parameters - Correlation Parameters
-    correlation_search_space_dimension: 0.3
+    # CRITICAL FIX: large search space extends outside map boundaries -> "unable to get pointer" crash
+    correlation_search_space_dimension: 0.1  # was 0.3 — must stay inside the loaded map bounds
     correlation_search_space_resolution: 0.005
     correlation_search_space_smear_deviation: 0.05 
 
