@@ -73,8 +73,8 @@ controller_server:
     # DWB parameters
     FollowPath:
       plugin: "vector_pursuit_controller::VectorPursuitController"
-      k: 3.0
-      desired_linear_vel: 0.2
+      k: 2.5
+      desired_linear_vel: 0.15
       min_turning_radius: 0.0 # Differential drive has 0 turning radius
       lookahead_dist: 0.1 # Increased to filter out small path irregularities (straighter driving)
       min_lookahead_dist: 0.05 # Reduced to allow approaching goal closer
@@ -94,7 +94,7 @@ controller_server:
       inflation_cost_scaling_factor: 10.0
       use_rotate_to_heading: true
       allow_reversing: false
-      rotate_to_heading_min_angle: 0.05 # Reduced to ~3 deg to force alignment before moving
+      rotate_to_heading_min_angle: 0.08 # Reduced to ~3 deg to force alignment before moving
 
       max_angular_accel: 2.0
       max_linear_accel: 0.25
@@ -153,7 +153,7 @@ global_costmap:
         plugin: "nav2_costmap_2d::InflationLayer"
         enabled: true
         cost_scaling_factor: 6.0
-        inflation_radius: 0.12
+        inflation_radius: 0.09
         inflate_unknown: false
         inflate_around_unknown: true
       always_send_full_costmap: true
@@ -176,7 +176,7 @@ local_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 6.0
-        inflation_radius: 0.12 # Decreased to fit narrow corridor
+        inflation_radius: 0.09 # Decreased to fit narrow corridor
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True

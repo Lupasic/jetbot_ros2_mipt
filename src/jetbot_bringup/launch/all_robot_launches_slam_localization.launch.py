@@ -28,7 +28,7 @@ def generate_launch_description():
         default_value=PathJoinSubstitution([
             FindPackageShare('jetbot_bringup'),
             'maps',
-            'map_labirint_tbank'
+            'map_labirint_v3'
         ]),
         description='Full path to the map file (without extension) for SLAM localization'
     )
