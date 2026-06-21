@@ -119,7 +119,7 @@ global_costmap:
       publish_frequency: 1.0
       global_frame: <robot_namespace>map
       robot_base_frame: <robot_namespace>base_footprint
-      robot_radius: 0.085 # radius set and used, so no footprint points
+      robot_radius: 0.08 # radius set and used, so no footprint points
       resolution: 0.02
       # plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
       plugins: ["static_layer", "inflation_layer"]
@@ -152,8 +152,8 @@ global_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         enabled: true
-        cost_scaling_factor: 6.0
-        inflation_radius: 0.09
+        cost_scaling_factor: 2.0
+        inflation_radius: 0.08
         inflate_unknown: false
         inflate_around_unknown: true
       always_send_full_costmap: true
@@ -170,13 +170,13 @@ local_costmap:
       width: 1
       height: 1
       resolution: 0.02
-      robot_radius: 0.085 # radius set and used, so no footprint points
+      robot_radius: 0.08 # radius set and used, so no footprint points
       # plugins: ["inflation_layer, "voxel_layer"]
       plugins: ["static_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 6.0
-        inflation_radius: 0.09 # Decreased to fit narrow corridor
+        cost_scaling_factor: 2.0
+        inflation_radius: 0.08 # gentler costmap (matches non-test) so start cell isn't inflated
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True

@@ -26,6 +26,7 @@ setup(
     entry_points={
         'console_scripts': [
             'robot_nav_bridge = jetbot_bringup.robot_nav_bridge:main',
+            'lcmapf_agent_node = jetbot_bringup.lcmapf_agent_node:main',
         ],
     },
 )

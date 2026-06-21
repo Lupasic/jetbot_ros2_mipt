@@ -21,11 +21,21 @@
               ".*/tf",
               ".*/tf_static",
               ".*/map",
-              ".*/nav/goal_reached"
+              ".*/nav/goal_reached",
+              // Distributed LC-MAPF: this robot's own outputs to the team/host.
+              ".*/mapf_cell",
+              ".*/mapf_message",
+              ".*/action"
             ],
             subscribers: [
               ".*/initialpose",
-              ".*/nav/goal"
+              ".*/nav/goal",
+              // Distributed LC-MAPF: a-priori config + step trigger from host, and
+              // every other robot's cells/messages (relayed by the host router).
+              ".*/mapf_config",
+              ".*/mapf_step",
+              ".*/mapf_cell",
+              ".*/mapf_message"
             ],
             service_servers: [],
             service_clients: [],
@@ -35,7 +45,11 @@
       pub_priorities: [
         ".*/initialpose=1:express",
         ".*/nav/goal=1:express",
-        ".*/nav/goal_reached=1:express"
+        ".*/nav/goal_reached=1:express",
+        // Low-latency path for the per-round communication exchange.
+        ".*/mapf_message=2:express",
+        ".*/mapf_cell=2:express",
+        ".*/action=1:express"
       ],
       
       //// queries_timeout: Timeouts configuration for various Zenoh queries.

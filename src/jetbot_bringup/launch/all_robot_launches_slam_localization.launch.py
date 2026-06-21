@@ -1,9 +1,32 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
+from launch.actions import (DeclareLaunchArgument, IncludeLaunchDescription,
+                            TimerAction, OpaqueFunction)
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
 from launch_ros.actions import Node
+
+
+def _distributed_agent(context, *args, **kwargs):
+    """Start the per-robot decentralized LCMAPFAgent only when distributed:=true."""
+    distributed = LaunchConfiguration('distributed').perform(context).lower() \
+        in ('true', '1', 'yes')
+    if not distributed:
+        return []
+    ns = LaunchConfiguration('robot_namespace').perform(context)  # e.g. "robot_2"
+    robot_id = int(ns.split('_')[-1])
+    device = LaunchConfiguration('device').perform(context)
+    # Delay so SLAM/TF are up before the agent reports cells in real-motion mode.
+    return [TimerAction(period=20.0, actions=[Node(
+        package='jetbot_bringup',
+        executable='lcmapf_agent_node',
+        name='lcmapf_agent',
+        namespace=ns,
+        parameters=[{'robot_id': robot_id, 'device': device}],
+        output='screen',
+        emulate_tty=True,
+    )])]
+
 
 def generate_launch_description():
     # Declare the launch argument for robot_id
@@ -31,6 +54,18 @@ def generate_launch_description():
             'map_labirint_v3'
         ]),
         description='Full path to the map file (without extension) for SLAM localization'
+    )
+
+    declare_distributed_cmd = DeclareLaunchArgument(
+        'distributed',
+        default_value='false',
+        description='Start the decentralized LCMAPFAgent node for distributed inference.'
+    )
+
+    declare_device_cmd = DeclareLaunchArgument(
+        'device',
+        default_value='cpu',
+        description='PyTorch device for the on-robot LCMAPFAgent (cpu recommended on Jetson).'
     )
 
     robot_namespace = LaunchConfiguration('robot_namespace')
@@ -117,9 +152,12 @@ def generate_launch_description():
     ld.add_action(declare_robot_id_cmd)
     ld.add_action(declare_params_file_cmd)
     ld.add_action(declare_map_file_name_cmd)
+    ld.add_action(declare_distributed_cmd)
+    ld.add_action(declare_device_cmd)
     ld.add_action(activate_all_drivers_launch)
     ld.add_action(slam_localization_launch)
     ld.add_action(navig_launch)
     ld.add_action(robot_nav_bridge_launch)
+    ld.add_action(OpaqueFunction(function=_distributed_agent))
 
     return ld

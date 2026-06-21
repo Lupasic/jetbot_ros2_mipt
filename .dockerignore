@@ -1,0 +1,8 @@
+# Never ship host-built (x86_64) artifacts into the aarch64 robot image.
+# The cppimport observation_generator extension is rebuilt inside the image for the
+# target arch; a stale .so or rendered source would break that prebuild / fail to load.
+**/__pycache__/
+**/*.pyc
+lc_mapf/*.so
+lc_mapf/*.rendered.*
+**/*.cpython-*-x86_64-*.so
