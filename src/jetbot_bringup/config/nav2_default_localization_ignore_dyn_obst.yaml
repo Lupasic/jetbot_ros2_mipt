@@ -98,21 +98,26 @@ controller_server:
       min_vel_y: 0.0
       max_vel_x: 0.1
       max_vel_y: 0.0
-      max_vel_theta: 1.0
+      # 1.0 -> 0.5: angular speed for in-path heading corrections only; rotate-in-place
+      # is handled by RotationShim (rotate_to_heading_angular_vel) and is unaffected
+      max_vel_theta: 0.5
       min_speed_xy: 0.0
       max_speed_xy: 0.2
       min_speed_theta: 0.0
-      
+
       acc_lim_x: 3.2
       acc_lim_y: 0.0
-      acc_lim_theta: 3.2
+      # 3.2 -> 1.5: softer steering — 3.2 rad/s^2 made angular corrections step-like (zigzags)
+      acc_lim_theta: 1.5
       decel_lim_x: -2.5
       decel_lim_y: 0.0
-      decel_lim_theta: -3.2
+      decel_lim_theta: -1.5
       vx_samples: 20
       vy_samples: 5
-      vtheta_samples: 20
-      sim_time: 1.2
+      # 20 -> 40: finer angular velocity sampling so gentle arcs exist between hard left/right
+      vtheta_samples: 40
+      # 1.2 -> 1.7: longer rollout horizon favours smooth arcs over reactive jerks
+      sim_time: 1.7
       linear_granularity: 0.05
       angular_granularity: 0.025
       transform_tolerance: 0.1
@@ -124,10 +129,14 @@ controller_server:
       critics: ["RotateToGoal", "Oscillation", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
       BaseObstacle.scale: 0.1
       PathAlign.scale: 24.0
-      PathAlign.forward_point_distance: 0.1
+      # 0.1 -> 0.3: align heading to a point further ahead — corrects course with gentle
+      # arcs in advance instead of twitching at the current position (main anti-zigzag fix)
+      PathAlign.forward_point_distance: 0.3
       GoalAlign.scale: 24.0
-      GoalAlign.forward_point_distance: 0.1
-      PathDist.scale: 32.0
+      GoalAlign.forward_point_distance: 0.3
+      # 32 -> 24: equal weight with PathAlign — lateral "snap to path" used to outweigh
+      # heading alignment, producing bang-bang corrections around the path line
+      PathDist.scale: 24.0
       GoalDist.scale: 24.0
       RotateToGoal.scale: 32.0
       RotateToGoal.slowing_factor: 5.0
@@ -315,8 +324,10 @@ velocity_smoother:
     feedback: "CLOSED_LOOP"
     max_velocity: [0.3, 0.0, 2.5]
     min_velocity: [-0.3, 0.0, -2.5]
-    max_accel: [2.5, 0.0, 3.2]
-    max_decel: [-2.5, 0.0, -3.2]
+    # theta accel 3.2 -> 1.5: matched with controller acc_lim_theta so the smoother
+    # also damps angular jerks coming from the rotation shim
+    max_accel: [2.5, 0.0, 1.5]
+    max_decel: [-2.5, 0.0, -1.5]
     odom_topic: "diffbot_base_controller/odom"
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]

@@ -17,9 +17,12 @@ diffbot_base_controller:
     #wheels_per_side: 1  # actually 2, but both are controlled by 1 signal
     wheel_radius: 0.033
 
-    wheel_separation_multiplier: 1.0
-    left_wheel_radius_multiplier: 1.0
-    right_wheel_radius_multiplier: 1.0
+    # calibrated 2026-06-11 on robot 2: odom 1441.6 deg vs physical 1550 deg (4 turns
+    # + 110) -> 1441.6/1550
+    wheel_separation_multiplier: 0.9301
+    # calibrated 2026-06-11 on robot 2: odom 0.6057 m vs tape 0.588 m -> 0.588/0.6057
+    left_wheel_radius_multiplier: 0.9708
+    right_wheel_radius_multiplier: 0.9708
 
     publish_rate: 60.0
     odom_frame_id: odom

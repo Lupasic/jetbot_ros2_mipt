@@ -40,13 +40,17 @@ slam_toolbox:
     # General Parameters
     use_scan_matching: true
     use_scan_barycenter: true
-    minimum_travel_distance: 0.05
-    minimum_travel_heading: 0.05
+    # 0.05 -> 0.10: sparser graph nodes — fewer near-identical scans smearing the walls,
+    # each match covers more motion
+    minimum_travel_distance: 0.10
+    minimum_travel_heading: 0.10
     scan_buffer_size: 60
     scan_buffer_maximum_scan_distance: 1.8
-    link_match_minimum_response_fine: 0.15  
+    link_match_minimum_response_fine: 0.15
     link_scan_maximum_distance: 1.5
-    loop_search_maximum_distance: 5.5
+    # 5.5 -> 2.0: maze is ~2.5 m across; searching loops map-wide invites false closures
+    # between identical-looking parallel walls (perceptual aliasing)
+    loop_search_maximum_distance: 2.0
     do_loop_closing: true 
     loop_match_minimum_chain_size: 15           
     loop_match_maximum_variance_coarse: 1.5 
@@ -54,9 +58,13 @@ slam_toolbox:
     loop_match_minimum_response_fine: 0.65
 
     # Correlation Parameters - Correlation Parameters
-    correlation_search_space_dimension: 0.1
+    # 0.1 -> 0.3: +-10 cm search window was smaller than real odom drift between passes —
+    # matcher could not reach the correct alignment and baked shifted (double) walls into
+    # the graph. +-15 cm covers typical drift. Watch CPU load on the Nano.
+    correlation_search_space_dimension: 0.3
     correlation_search_space_resolution: 0.005
-    correlation_search_space_smear_deviation: 0.05 
+    # 0.05 -> 0.03: less intentional blur during matching -> thinner, crisper walls
+    correlation_search_space_smear_deviation: 0.03
 
     # Correlation Parameters - Loop Closure Parameters
     loop_search_space_dimension: 0.5
@@ -73,5 +81,7 @@ slam_toolbox:
     minimum_angle_penalty: 0.7
     minimum_distance_penalty: 0.3
     use_response_expansion: true
-    min_pass_through: 2
+    # 2 -> 3: a cell needs 3 hits to become a wall — filters single-ray outliers (speckle
+    # dots outside the map)
+    min_pass_through: 3
     occupancy_threshold: 0.1
